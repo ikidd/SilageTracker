@@ -1,0 +1,6 @@
+{
+  "appTitle": "silage_tracker",
+  "@appTitle": {
+    "description": "The title of the application"
+  }
+}
