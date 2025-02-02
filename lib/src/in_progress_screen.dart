@@ -9,12 +9,12 @@ class InProgressScreen extends StatefulWidget {
   final double grainPercentage;
 
   const InProgressScreen({
-    Key? key,
+    super.key,
     required this.database,
     required this.herdId,
     required this.loadSize,
     required this.grainPercentage,
-  }) : super(key: key);
+  });
 
   @override
   _InProgressScreenState createState() => _InProgressScreenState();
