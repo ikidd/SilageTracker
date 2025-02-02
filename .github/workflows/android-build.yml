@@ -23,4 +23,4 @@ jobs:
       uses: android-actions/setup-android@v2
 
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./android/gradlew build
