@@ -34,11 +34,20 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Configure Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew wrapper
+
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release
+          cd build/app/outputs/flutter-apk/
+          mv app-release.apk silage-tracker-release.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
-          name: app-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: silage-tracker-release
+          path: build/app/outputs/flutter-apk/silage-tracker-release.apk
