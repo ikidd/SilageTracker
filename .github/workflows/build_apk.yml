@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK and Release
 
 on:
   push:
@@ -46,8 +46,36 @@ jobs:
           cd build/app/outputs/flutter-apk/
           mv app-release.apk silage-tracker-release.apk
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Get latest release version
+        id: get_version
+        run: |
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name || echo "0.0.0")
+          if [ "$LATEST_RELEASE" = "null" ]; then
+            LATEST_RELEASE="0.0.0"
+          fi
+          echo "Current version: $LATEST_RELEASE"
+          # Split version into parts
+          IFS='.' read -r major minor patch <<< "$LATEST_RELEASE"
+          # Increment patch version
+          new_patch=$((patch + 1))
+          NEW_VERSION="$major.$minor.$new_patch"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "New version will be: $NEW_VERSION"
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: silage-tracker-release
-          path: build/app/outputs/flutter-apk/silage-tracker-release.apk
+          tag_name: ${{ env.NEW_VERSION }}
+          name: Release ${{ env.NEW_VERSION }}
+          draft: false
+          prerelease: false
+          files: build/app/outputs/flutter-apk/silage-tracker-release.apk
+          body: |
+            Release ${{ env.NEW_VERSION }}
+            
+            Changes in this version:
+            - Automated release from main branch
+            - APK build included
