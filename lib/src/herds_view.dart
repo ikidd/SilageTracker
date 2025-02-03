@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'herd_edit_view.dart';
 
 class HerdsView extends StatefulWidget {
-  final Database database; // Add database parameter
+  final SupabaseClient supabaseClient; // Add SupabaseClient parameter
 
   const HerdsView({
     super.key,
-    required this.database,
+    required this.supabaseClient,
   });
 
   static const routeName = '/herds';
@@ -21,36 +20,23 @@ class _HerdsViewState extends State<HerdsView> {
   final TextEditingController _herdNameController = TextEditingController();
   final TextEditingController _numberOfAnimalsController = TextEditingController();
   List<Map<String, dynamic>> _herds = [];
-  late Database _database;
 
   @override
   void initState() {
     super.initState();
-    _initDatabase();
-  }
-
-  Future<void> _initDatabase() async {
-    try {
-      _database = await openDatabase(
-        join(await getDatabasesPath(), 'herds_database.db'),
-        onCreate: (db, version) {
-          return db.execute(
-            'CREATE TABLE herds(id INTEGER PRIMARY KEY, name TEXT, numberOfAnimals INTEGER)',
-          );
-        },
-        version: 1,
-      );
-    } catch (e) {
-      print('Error opening database: $e');
-    }
     _loadHerds();
   }
 
   Future<void> _loadHerds() async {
-    final List<Map<String, dynamic>> herds = await _database.query('herds');
-    setState(() {
-      _herds = herds;
-    });
+    final response = await widget.supabaseClient
+        .from('herds')
+        .select()
+        .execute();
+    if (response.error == null && response.data is List) {
+      setState(() {
+        _herds = (response.data as List).cast<Map<String, dynamic>>();
+      });
+    }
   }
 
   Future<void> _addHerd() async {
@@ -58,11 +44,19 @@ class _HerdsViewState extends State<HerdsView> {
     final int? numberOfAnimals = int.tryParse(_numberOfAnimalsController.text);
 
     if (name.isNotEmpty && numberOfAnimals != null) {
-      await _database.insert(
-        'herds',
-        {'name': name, 'numberOfAnimals': numberOfAnimals},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      final response = await widget.supabaseClient
+          .from('herds')
+          .insert({
+            'name': name,
+            'numberOfAnimals': numberOfAnimals,
+          })
+          .execute();
+      if (response.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.error!.message}')),
+        );
+        return;
+      }
       _herdNameController.clear();
       _numberOfAnimalsController.clear();
       _loadHerds();
@@ -150,7 +144,7 @@ class _HerdsViewState extends State<HerdsView> {
                               MaterialPageRoute(
                                 builder: (context) => HerdEditView(
                                   herd: _herds[index],
-                                  database: _database,
+                                  supabaseClient: widget.supabaseClient,
                                   onHerdChanged: _loadHerds,
                                 ),
                               ),

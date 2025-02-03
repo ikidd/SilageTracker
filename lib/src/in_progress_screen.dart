@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 class InProgressScreen extends StatefulWidget {
-  final Database database;
+  final SupabaseClient supabaseClient;
   final int? herdId;
   final double loadSize;
   final double grainPercentage;
 
   const InProgressScreen({
     super.key,
-    required this.database,
+    required this.supabaseClient,
     required this.herdId,
     required this.loadSize,
     required this.grainPercentage,
@@ -34,13 +34,23 @@ class _InProgressScreenState extends State<InProgressScreen> {
     final double? amountUsed = double.tryParse(_amountUsedController.text);
     if (amountUsed != null && widget.herdId != null) {
       final String uid = _uuid.v4();
-      await widget.database.insert('silage_fed', {
-        'uid': uid,
-        'herd_id': widget.herdId,
-        'amount_fed': amountUsed,
-        'grain_percentage': widget.grainPercentage,
-        'fed_at': DateTime.now().toIso8601String(),
-      });
+      final response = await widget.supabaseClient
+          .from('silage_fed')
+          .insert({
+            'uid': uid,
+            'herd_id': widget.herdId,
+            'amount_fed': amountUsed,
+            'grain_percentage': widget.grainPercentage,
+            'created_at': DateTime.now().toIso8601String(),
+          })
+          .execute();
+      
+      if (response.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.error!.message}')),
+        );
+        return;
+      }
       Navigator.pop(context, true); // Return true to indicate refresh needed
     }
   }

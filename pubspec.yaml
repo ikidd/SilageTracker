@@ -18,6 +18,8 @@ dependencies:
   sqflite: ^2.0.0
   sqflite_common_ffi: ^2.0.0
   path: ^1.8.0
+  supabase_flutter: ^0.2.0
+  app_links: ^2.0.0 # Replace uni_links with app_links
 
 dev_dependencies:
   flutter_test:

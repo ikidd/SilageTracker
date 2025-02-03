@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HerdEditView extends StatefulWidget {
   final Map<String, dynamic> herd;
-  final Database database;
+  final SupabaseClient supabaseClient; // Change to SupabaseClient
   final VoidCallback onHerdChanged; // Add callback parameter
 
   const HerdEditView({
     super.key,
     required this.herd,
-    required this.database,
+    required this.supabaseClient, // Update parameter
     required this.onHerdChanged,
   });
 
@@ -34,12 +34,21 @@ class _HerdEditViewState extends State<HerdEditView> {
     final ctx = context;
 
     if (name.isNotEmpty && numberOfAnimals != null) {
-      await widget.database.update(
-        'herds',
-        {'name': name, 'numberOfAnimals': numberOfAnimals},
-        where: 'id = ?',
-        whereArgs: [widget.herd['id']],
-      );
+      final response = await widget.supabaseClient
+          .from('herds')
+          .update({
+            'name': name,
+            'numberOfAnimals': numberOfAnimals,
+          })
+          .eq('id', widget.herd['id'])
+          .execute();
+      
+      if (response.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.error!.message}')),
+        );
+        return;
+      }
       widget.onHerdChanged(); // Call the callback to refresh the herd list
       if (mounted) {
         Navigator.of(ctx).pop();
@@ -49,11 +58,19 @@ class _HerdEditViewState extends State<HerdEditView> {
 
   Future<void> _deleteHerd() async {
     final ctx = context;
-    await widget.database.delete(
-      'herds',
-      where: 'id = ?',
-      whereArgs: [widget.herd['id']],
-    );
+    final response = await widget.supabaseClient
+        .from('herds')
+        .delete()
+        .eq('id', widget.herd['id'])
+        .execute();
+    
+    if (response.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${response.error!.message}')),
+      );
+      return;
+    }
+    
     widget.onHerdChanged(); // Call the callback to refresh the herd list
     if (mounted) {
       Navigator.of(ctx).pop();
