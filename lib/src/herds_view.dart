@@ -28,38 +28,65 @@ class _HerdsViewState extends State<HerdsView> {
   }
 
   Future<void> _loadHerds() async {
-    final response = await widget.supabaseClient
+    final dynamic response = await widget.supabaseClient
         .from('herds')
-        .select()
-        .execute();
-    if (response.error == null && response.data is List) {
+        .select();
+    if (response is List) {
       setState(() {
-        _herds = (response.data as List).cast<Map<String, dynamic>>();
+        _herds = List<Map<String, dynamic>>.from(response);
       });
     }
   }
 
   Future<void> _addHerd() async {
-    final String name = _herdNameController.text;
+    final String name = _herdNameController.text.trim();
     final int? numberOfAnimals = int.tryParse(_numberOfAnimalsController.text);
+    final user = widget.supabaseClient.auth.currentUser;
 
-    if (name.isNotEmpty && numberOfAnimals != null) {
-      final response = await widget.supabaseClient
-          .from('herds')
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to add a herd')),
+      );
+      return;
+    }
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a herd name')),
+      );
+      return;
+    }
+
+    if (numberOfAnimals == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid number of animals')),
+      );
+      return;
+    }
+
+    if (numberOfAnimals < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Number of animals cannot be negative')),
+      );
+      return;
+    }
+
+    try {
+      await widget.supabaseClient
+        .from('herds')
           .insert({
             'name': name,
             'numberOfAnimals': numberOfAnimals,
-          })
-          .execute();
-      if (response.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.error!.message}')),
-        );
-        return;
-      }
+          });
       _herdNameController.clear();
       _numberOfAnimalsController.clear();
       _loadHerds();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
     }
   }
 
@@ -131,7 +158,7 @@ class _HerdsViewState extends State<HerdsView> {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            '${_herds[index]['numberOfAnimals']}',
+                            '${_herds[index]['numberOfAnimals'] ?? 0}',
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),

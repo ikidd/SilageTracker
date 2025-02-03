@@ -28,35 +28,37 @@ class _SilageEntryViewState extends State<SilageEntryView> {
 
   Future<void> _loadHerds() async {
     print('Loading herds...'); // Corrected debug log
-    final response = await widget.supabaseClient
-        .from('herds')
-        .select()
-        .execute();
-    if (response.error == null) {
-      print('Herds loaded: ${response.data}'); // Debug log
-      setState(() {
-        _herds = (response.data as List).cast<Map<String, dynamic>>();
-      });
-    } else {
-      print('Error loading herds: ${response.error!.message}'); // Error handling
+    try {
+      final dynamic response = await widget.supabaseClient
+          .from('herds')
+          .select();
+      print('Herds loaded: $response'); // Debug log
+      if (response is List) {
+        setState(() {
+          _herds = List<Map<String, dynamic>>.from(response);
+        });
+      }
+    } catch (error) {
+      print('Error loading herds: $error'); // Error handling
     }
   }
 
   Future<void> _loadSilageEntries() async {
     print('Loading silage entries...'); // Debug log
-    final response = await widget.supabaseClient
-        .from('silage_fed')
-        .select('*, herds(name)')
-        .order('created_at', ascending: false)
-        .limit(10)
-        .execute();
-    if (response.error == null) {
-      print('Silage entries loaded: ${response.data}'); // Debug log
-      setState(() {
-        _silageEntries = (response.data as List).cast<Map<String, dynamic>>();
-      });
-    } else {
-      print('Error loading silage entries: ${response.error!.message}'); // Error handling
+    try {
+      final dynamic response = await widget.supabaseClient
+          .from('silage_fed')
+          .select('*, herds(name)')
+          .order('created_at', ascending: false)
+          .limit(10);
+      print('Silage entries loaded: $response'); // Debug log
+      if (response is List) {
+        setState(() {
+          _silageEntries = List<Map<String, dynamic>>.from(response);
+        });
+      }
+    } catch (error) {
+      print('Error loading silage entries: $error'); // Error handling
     }
   }
 
@@ -96,23 +98,29 @@ class _SilageEntryViewState extends State<SilageEntryView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Dropdown for selecting herd
-            DropdownButtonFormField<int>(
-              value: _selectedHerd?['id'],
-              decoration: InputDecoration(
+            DropdownButtonFormField<String?>(
+              value: _selectedHerd?['uid'],
+              decoration: const InputDecoration(
                 labelText: 'Select Herd',
                 border: OutlineInputBorder(),
               ),
-              items: _herds.map((herd) {
-                return DropdownMenuItem<int>(
-                  value: herd['id'],
-                  child: Text('${herd['name']} (${herd['numberOfAnimals']} animals)'),
-                );
-              }).toList(),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Select a herd'),
+                ),
+                ..._herds.map((herd) {
+                  return DropdownMenuItem<String?>(
+                    value: herd['uid'],
+                    child: Text('${herd['name']} (${herd['numberOfAnimals']} animals)'),
+                  );
+                }).toList(),
+              ],
               onChanged: (value) {
                 setState(() {
                   if (value != null) {
                     try {
-                      _selectedHerd = _herds.firstWhere((herd) => herd['id'] == value);
+                      _selectedHerd = _herds.firstWhere((herd) => herd['uid'] == value);
                     } catch (e) {
                       _selectedHerd = null;
                       print('Herd not found for id $value');
@@ -127,23 +135,26 @@ class _SilageEntryViewState extends State<SilageEntryView> {
             // TextField for load size
             TextField(
               controller: _loadSizeController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Load size (lbs)',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textInputAction: TextInputAction.next,
               onChanged: (value) => _calculateGrainWeight(),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             // TextField for grain percentage
             TextField(
               controller: _grainPercentageController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Grain percentage (%)',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textInputAction: TextInputAction.done,
               onChanged: (value) => _calculateGrainWeight(),
+              onSubmitted: (_) => FocusScope.of(context).unfocus(),
             ),
             SizedBox(height: 20),
             // Button to start feeding
@@ -161,7 +172,7 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                   MaterialPageRoute(
                     builder: (context) => InProgressScreen(
                       supabaseClient: widget.supabaseClient,
-                      herdId: _selectedHerd!['id'],
+                      herdId: _selectedHerd!['uid'],
                       loadSize: double.tryParse(_loadSizeController.text) ?? 0,
                       grainPercentage: double.tryParse(_grainPercentageController.text) ?? 0,
                     ),
@@ -195,7 +206,7 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                           itemBuilder: (context, index) {
                             final entry = _silageEntries[index];
                             return ListTile(
-                              title: Text('${entry['herd_name']}'),
+                              title: Text('${entry['herds']['name']}'),
                               subtitle: Text(
                                 'Fed ${entry['amount_fed']} lbs @ ${entry['grain_percentage']}% grain\n'
                                 '${DateTime.parse(entry['created_at']).toLocal()}',

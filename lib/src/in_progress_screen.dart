@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 
 class InProgressScreen extends StatefulWidget {
   final SupabaseClient supabaseClient;
-  final int? herdId;
+  final String? herdId;
   final double loadSize;
   final double grainPercentage;
 
@@ -34,7 +34,8 @@ class _InProgressScreenState extends State<InProgressScreen> {
     final double? amountUsed = double.tryParse(_amountUsedController.text);
     if (amountUsed != null && widget.herdId != null) {
       final String uid = _uuid.v4();
-      final response = await widget.supabaseClient
+      try {
+        await widget.supabaseClient
           .from('silage_fed')
           .insert({
             'uid': uid,
@@ -42,12 +43,10 @@ class _InProgressScreenState extends State<InProgressScreen> {
             'amount_fed': amountUsed,
             'grain_percentage': widget.grainPercentage,
             'created_at': DateTime.now().toIso8601String(),
-          })
-          .execute();
-      
-      if (response.error != null) {
+          });
+      } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.error!.message}')),
+          SnackBar(content: Text('Error: $error')),
         );
         return;
       }

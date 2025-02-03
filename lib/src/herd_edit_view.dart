@@ -24,56 +24,78 @@ class _HerdEditViewState extends State<HerdEditView> {
   @override
   void initState() {
     super.initState();
-    _herdNameController = TextEditingController(text: widget.herd['name']);
-    _numberOfAnimalsController = TextEditingController(text: widget.herd['numberOfAnimals'].toString());
+    _herdNameController = TextEditingController(text: widget.herd['name'] ?? '');
+    _numberOfAnimalsController = TextEditingController(
+      text: widget.herd['numberOfAnimals']?.toString() ?? '0'
+    );
   }
 
   Future<void> _saveHerd() async {
-    final String name = _herdNameController.text;
+    final String name = _herdNameController.text.trim();
     final int? numberOfAnimals = int.tryParse(_numberOfAnimalsController.text);
     final ctx = context;
 
-    if (name.isNotEmpty && numberOfAnimals != null) {
-      final response = await widget.supabaseClient
-          .from('herds')
-          .update({
-            'name': name,
-            'numberOfAnimals': numberOfAnimals,
-          })
-          .eq('id', widget.herd['id'])
-          .execute();
-      
-      if (response.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.error!.message}')),
-        );
-        return;
-      }
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a herd name')),
+      );
+      return;
+    }
+
+    if (numberOfAnimals == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid number of animals')),
+      );
+      return;
+    }
+
+    if (numberOfAnimals < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Number of animals cannot be negative')),
+      );
+      return;
+    }
+
+    try {
+      await widget.supabaseClient
+        .from('herds')
+        .update({
+          'name': name,
+          'numberOfAnimals': numberOfAnimals,
+        })
+        .eq('uid', widget.herd['uid']);
+        
       widget.onHerdChanged(); // Call the callback to refresh the herd list
       if (mounted) {
         Navigator.of(ctx).pop();
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
       }
     }
   }
 
   Future<void> _deleteHerd() async {
     final ctx = context;
-    final response = await widget.supabaseClient
+    try {
+      await widget.supabaseClient
         .from('herds')
         .delete()
-        .eq('id', widget.herd['id'])
-        .execute();
-    
-    if (response.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${response.error!.message}')),
-      );
-      return;
-    }
-    
-    widget.onHerdChanged(); // Call the callback to refresh the herd list
-    if (mounted) {
-      Navigator.of(ctx).pop();
+        .eq('uid', widget.herd['uid']);
+        
+      widget.onHerdChanged(); // Call the callback to refresh the herd list
+      if (mounted) {
+        Navigator.of(ctx).pop();
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
     }
   }
 

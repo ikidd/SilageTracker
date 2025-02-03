@@ -12,20 +12,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  uuid: ^3.0.4
+  uuid: ^4.2.1
   flutter_localizations:
     sdk: flutter
-  sqflite: ^2.0.0
-  sqflite_common_ffi: ^2.0.0
-  path: ^1.8.0
-  supabase_flutter: ^0.2.0
-  app_links: ^2.0.0 # Replace uni_links with app_links
+  path: ^1.8.3
+  supabase_flutter: ^2.3.1
+  app_links: ^3.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  flutter_lints: ^5.0.0
+  flutter_lints: ^3.0.1
 
 flutter:
   uses-material-design: true
