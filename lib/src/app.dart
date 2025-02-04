@@ -3,7 +3,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'sample_feature/sample_item_details_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 import 'silage_entry_view.dart';
@@ -81,8 +80,6 @@ class _MyAppState extends State<MyApp> {
                   switch (routeSettings.name) {
                     case SettingsView.routeName:
                       return SettingsView(controller: widget.settingsController);
-                    case SampleItemDetailsView.routeName:
-                      return const SampleItemDetailsView();
                     case SilageEntryView.routeName:
                       return SilageEntryView(supabaseClient: _supabaseClient);
                     case HerdsView.routeName:
@@ -105,6 +102,13 @@ class _MyAppState extends State<MyApp> {
                               title: const Text('Herds'),
                               onTap: () {
                                 Navigator.pushNamed(context, HerdsView.routeName);
+                              },
+                            ),
+                            ListTile(
+                              title: const Text('Settings'),
+                              leading: const Icon(Icons.settings),
+                              onTap: () {
+                                Navigator.pushNamed(context, SettingsView.routeName);
                               },
                             ),
                           ],
