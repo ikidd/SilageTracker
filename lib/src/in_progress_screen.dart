@@ -127,52 +127,43 @@ class _InProgressScreenState extends State<InProgressScreen> {
     }
 
     try {
-      // Calculate the actual grain percentage for this feeding
-      final double totalGrain = (loadSize * (grainPercentage / 100)) + _carriedOverGrain;
-      final double actualGrainPercentage = (totalGrain / totalAvailable) * 100;
-
       await widget.supabaseClient
         .from('silage_fed')
         .insert({
           'uid': _uuid.v4(),
           'herd_id': _selectedHerd!['uid'],
           'amount_fed': amountUsed,
-          'grain_percentage': actualGrainPercentage,
+          'grain_percentage': grainPercentage,
           'created_at': DateTime.now().toIso8601String(),
         });
 
-      // Calculate remaining amounts from this load only
+      // Calculate remaining amount
       final double remaining = totalAvailable - amountUsed;
       
-      if (remaining > 0) {
-        // Calculate remaining grain based on the proportion of feed remaining
-        final double remainingGrain = totalGrain * (remaining / totalAvailable);
-        
-        setState(() {
+      setState(() {
+        if (remaining > 0) {
+          // Set carryover with current grain percentage
           _carriedOverLoad = remaining;
-          _carriedOverGrain = remainingGrain;
-          _resetForm();
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(
-            'Load saved. Remaining: ${remaining.toStringAsFixed(2)} lbs with '
-            '${remainingGrain.toStringAsFixed(2)} lbs grain'
-          )),
-        );
-      } else {
-        // No carryover if everything was used
-        setState(() {
+          _carriedOverGrain = remaining * (grainPercentage / 100);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(
+              'Load saved. Remaining: ${remaining.toStringAsFixed(2)} lbs with '
+              '${_carriedOverGrain.toStringAsFixed(2)} lbs grain'
+            )),
+          );
+        } else {
+          // Reset carryover when nothing remains
           _carriedOverLoad = 0;
           _carriedOverGrain = 0;
-          _resetForm();
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Load saved successfully')),
-        );
-        Navigator.pop(context, true);
-      }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Load saved successfully')),
+          );
+          Navigator.pop(context, true);
+        }
+        _resetForm();
+      });
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $error')),
