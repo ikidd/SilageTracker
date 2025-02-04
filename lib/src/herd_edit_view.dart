@@ -3,13 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HerdEditView extends StatefulWidget {
   final Map<String, dynamic> herd;
-  final SupabaseClient supabaseClient; // Change to SupabaseClient
-  final VoidCallback onHerdChanged; // Add callback parameter
+  final SupabaseClient supabaseClient;
+  final VoidCallback onHerdChanged;
 
   const HerdEditView({
     super.key,
     required this.herd,
-    required this.supabaseClient, // Update parameter
+    required this.supabaseClient,
     required this.onHerdChanged,
   });
 
@@ -65,7 +65,7 @@ class _HerdEditViewState extends State<HerdEditView> {
         })
         .eq('uid', widget.herd['uid']);
         
-      widget.onHerdChanged(); // Call the callback to refresh the herd list
+      widget.onHerdChanged();
       if (mounted) {
         Navigator.of(ctx).pop();
       }
@@ -78,15 +78,41 @@ class _HerdEditViewState extends State<HerdEditView> {
     }
   }
 
-  Future<void> _deleteHerd() async {
+  Future<void> _deactivateHerd() async {
     final ctx = context;
+    // Show confirmation dialog
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Deactivate Herd'),
+          content: const Text(
+            'Are you sure you want to deactivate this herd? '
+            'This will hide it from the list but preserve its history.'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Deactivate'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
     try {
       await widget.supabaseClient
         .from('herds')
-        .delete()
+        .update({'active': false})
         .eq('uid', widget.herd['uid']);
         
-      widget.onHerdChanged(); // Call the callback to refresh the herd list
+      widget.onHerdChanged();
       if (mounted) {
         Navigator.of(ctx).pop();
       }
@@ -103,39 +129,49 @@ class _HerdEditViewState extends State<HerdEditView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Herd'),
+        title: const Text('Edit Herd'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _herdNameController,
-              decoration: InputDecoration(labelText: 'Herd Name'),
+              decoration: const InputDecoration(
+                labelText: 'Herd Name',
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 16),
             TextField(
               controller: _numberOfAnimalsController,
-              decoration: InputDecoration(labelText: 'Number of Animals'),
+              decoration: const InputDecoration(
+                labelText: 'Number of Animals',
+                border: OutlineInputBorder(),
+              ),
               keyboardType: TextInputType.number,
             ),
+            const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
+                FilledButton(
                   onPressed: _saveHerd,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                  ),
                   child: const Text('Save'),
                 ),
-                ElevatedButton(
-                  onPressed: _deleteHerd,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Delete'),
-                ),
-                ElevatedButton(
+                OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
+                ),
+                FilledButton.tonal(
+                  onPressed: _deactivateHerd,
+                  child: Text(
+                    'Deactivate',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
               ],
             ),

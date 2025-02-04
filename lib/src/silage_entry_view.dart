@@ -12,35 +12,43 @@ class SilageEntryView extends StatefulWidget {
 }
 
 class _SilageEntryViewState extends State<SilageEntryView> {
-  final TextEditingController _loadSizeController = TextEditingController(text: '0');
-  final TextEditingController _grainPercentageController = TextEditingController(text: '0');
-  String _result = '';
-  List<Map<String, dynamic>> _herds = [];
   List<Map<String, dynamic>> _silageEntries = [];
-  Map<String, dynamic>? _selectedHerd;
+  List<Map<String, dynamic>> _filteredEntries = [];
+  String? _dateFilter;
+  String? _herdFilter;
+  List<String> _uniqueHerds = [];
 
   @override
   void initState() {
     super.initState();
-    _loadHerds();
     _loadSilageEntries();
   }
 
-  Future<void> _loadHerds() async {
-    print('Loading herds...'); // Corrected debug log
-    try {
-      final dynamic response = await widget.supabaseClient
-          .from('herds')
-          .select();
-      print('Herds loaded: $response'); // Debug log
-      if (response is List) {
-        setState(() {
-          _herds = List<Map<String, dynamic>>.from(response);
-        });
-      }
-    } catch (error) {
-      print('Error loading herds: $error'); // Error handling
-    }
+  void _updateFilters() {
+    setState(() {
+      _filteredEntries = _silageEntries.where((entry) {
+        bool matchesDate = true;
+        bool matchesHerd = true;
+
+        if (_dateFilter != null && _dateFilter!.isNotEmpty) {
+          final entryDate = DateTime.parse(entry['created_at']).toLocal().toString().split(' ')[0];
+          matchesDate = entryDate == _dateFilter;
+        }
+
+        if (_herdFilter != null && _herdFilter!.isNotEmpty) {
+          matchesHerd = entry['herds']['name'] == _herdFilter;
+        }
+
+        return matchesDate && matchesHerd;
+      }).toList();
+
+      // Update unique herds list
+      _uniqueHerds = _silageEntries
+          .map((e) => e['herds']['name'] as String)
+          .toSet()
+          .toList()
+        ..sort();
+    });
   }
 
   Future<void> _loadSilageEntries() async {
@@ -49,41 +57,18 @@ class _SilageEntryViewState extends State<SilageEntryView> {
       final dynamic response = await widget.supabaseClient
           .from('silage_fed')
           .select('*, herds(name)')
-          .order('created_at', ascending: false)
-          .limit(10);
+          .order('created_at', ascending: false);
       print('Silage entries loaded: $response'); // Debug log
       if (response is List) {
         setState(() {
           _silageEntries = List<Map<String, dynamic>>.from(response);
+          _filteredEntries = _silageEntries;
+          _updateFilters();
         });
       }
     } catch (error) {
       print('Error loading silage entries: $error'); // Error handling
     }
-  }
-
-  void _calculateGrainWeight() {
-    final double? loadSize = double.tryParse(_loadSizeController.text);
-    final double? grainPercentage = double.tryParse(_grainPercentageController.text);
-
-    if (loadSize != null && grainPercentage != null) {
-      final double grainWeight = loadSize * (grainPercentage / 100);
-      setState(() {
-        _result = 'Load size @ $grainPercentage% = ${grainWeight.toStringAsFixed(2)} lbs of grain';
-      });
-    } else {
-      setState(() {
-        _result = 'Please enter valid numbers for load size and grain percentage.';
-      });
-    }
-  }
-
-  void _resetEntryFields() {
-    _loadSizeController.text = '0';
-    _grainPercentageController.text = '0';
-    setState(() {
-      _result = '';
-    });
   }
 
   @override
@@ -97,122 +82,122 @@ class _SilageEntryViewState extends State<SilageEntryView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Dropdown for selecting herd
-            DropdownButtonFormField<String?>(
-              value: _selectedHerd?['uid'],
-              decoration: const InputDecoration(
-                labelText: 'Select Herd',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('Select a herd'),
-                ),
-                ..._herds.map((herd) {
-                  return DropdownMenuItem<String?>(
-                    value: herd['uid'],
-                    child: Text('${herd['name']} (${herd['numberOfAnimals']} animals)'),
-                  );
-                }).toList(),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  if (value != null) {
-                    try {
-                      _selectedHerd = _herds.firstWhere((herd) => herd['uid'] == value);
-                    } catch (e) {
-                      _selectedHerd = null;
-                      print('Herd not found for id $value');
-                    }
-                  } else {
-                    _selectedHerd = null;
-                  }
-                });
-              },
-            ),
-            SizedBox(height: 16),
-            // TextField for load size
-            TextField(
-              controller: _loadSizeController,
-              decoration: const InputDecoration(
-                labelText: 'Load size (lbs)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => _calculateGrainWeight(),
-            ),
-            const SizedBox(height: 16),
-            // TextField for grain percentage
-            TextField(
-              controller: _grainPercentageController,
-              decoration: const InputDecoration(
-                labelText: 'Grain percentage (%)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.done,
-              onChanged: (value) => _calculateGrainWeight(),
-              onSubmitted: (_) => FocusScope.of(context).unfocus(),
-            ),
-            SizedBox(height: 20),
-            // Button to start feeding
+            // Button to start new load
             ElevatedButton(
               onPressed: () async {
-                if (_selectedHerd == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please select a herd before starting feeding.')),
-                  );
-                  return;
-                }
-
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => InProgressScreen(
                       supabaseClient: widget.supabaseClient,
-                      herdId: _selectedHerd!['uid'],
-                      loadSize: double.tryParse(_loadSizeController.text) ?? 0,
-                      grainPercentage: double.tryParse(_grainPercentageController.text) ?? 0,
                     ),
                   ),
                 );
                 if (result == true) {
                   await _loadSilageEntries();
-                  _resetEntryFields();
                 }
               },
-              child: Text('Start Feeding'),
-            ),
-            SizedBox(height: 10),
-            // Display result
-            Text(
-              _result,
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
+              child: Text('Start New Load'),
             ),
             SizedBox(height: 20),
-            // ListBox to display silage_fed records
+            // DataTable to display silage_fed records
             Expanded(
               child: Card(
                 elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                child: SingleChildScrollView(
                   child: _silageEntries.isEmpty
-                      ? Center(child: Text('No silage entries found.'))
-                      : ListView.builder(
-                          itemCount: _silageEntries.length,
-                          itemBuilder: (context, index) {
-                            final entry = _silageEntries[index];
-                            return ListTile(
-                              title: Text('${entry['herds']['name']}'),
-                              subtitle: Text(
-                                'Fed ${entry['amount_fed']} lbs @ ${entry['grain_percentage']}% grain\n'
-                                '${DateTime.parse(entry['created_at']).toLocal()}',
+                      ? Center(child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text('No silage entries found.'),
+                        ))
+                      : DataTable(
+                          columns: [
+                            DataColumn(
+                              label: Row(
+                                children: [
+                                  const Text('Date'),
+                                  IconButton(
+                                    icon: const Icon(Icons.filter_list),
+                                    onPressed: () async {
+                                      final date = await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      if (date != null) {
+                                        setState(() {
+                                          _dateFilter = date.toString().split(' ')[0];
+                                          _updateFilters();
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  if (_dateFilter != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        setState(() {
+                                          _dateFilter = null;
+                                          _updateFilters();
+                                        });
+                                      },
+                                    ),
+                                ],
                               ),
+                            ),
+                            DataColumn(
+                              label: Row(
+                                children: [
+                                  const Text('Herd'),
+                                  PopupMenuButton<String>(
+                                    icon: const Icon(Icons.filter_list),
+                                    onSelected: (String value) {
+                                      setState(() {
+                                        _herdFilter = value;
+                                        _updateFilters();
+                                      });
+                                    },
+                                    itemBuilder: (BuildContext context) {
+                                      return [
+                                        const PopupMenuItem<String>(
+                                          value: '',
+                                          child: Text('Clear Filter'),
+                                        ),
+                                        ..._uniqueHerds.map((herd) => PopupMenuItem<String>(
+                                          value: herd,
+                                          child: Text(herd),
+                                        )),
+                                      ];
+                                    },
+                                  ),
+                                  if (_herdFilter != null && _herdFilter!.isNotEmpty)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        setState(() {
+                                          _herdFilter = null;
+                                          _updateFilters();
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                            const DataColumn(
+                              label: Text('Amount Fed (lbs)'),
+                            ),
+                          ],
+                          rows: _filteredEntries.map((entry) {
+                            final date = DateTime.parse(entry['created_at']).toLocal();
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(date.toString().split(' ')[0])),
+                                DataCell(Text(entry['herds']['name'])),
+                                DataCell(Text('${entry['amount_fed']} lbs')),
+                              ],
                             );
-                          },
+                          }).toList(),
                         ),
                 ),
               ),

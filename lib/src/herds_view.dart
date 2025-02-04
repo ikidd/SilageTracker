@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'herd_edit_view.dart';
 
 class HerdsView extends StatefulWidget {
-  final SupabaseClient supabaseClient; // Add SupabaseClient parameter
+  final SupabaseClient supabaseClient;
 
   const HerdsView({
     super.key,
@@ -28,13 +28,22 @@ class _HerdsViewState extends State<HerdsView> {
   }
 
   Future<void> _loadHerds() async {
-    final dynamic response = await widget.supabaseClient
-        .from('herds')
-        .select();
-    if (response is List) {
-      setState(() {
-        _herds = List<Map<String, dynamic>>.from(response);
-      });
+    try {
+      final dynamic response = await widget.supabaseClient
+          .from('herds')
+          .select()
+          .eq('active', true); // Only select active herds
+      if (response is List) {
+        setState(() {
+          _herds = List<Map<String, dynamic>>.from(response);
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading herds: $error')),
+        );
+      }
     }
   }
 
@@ -74,10 +83,11 @@ class _HerdsViewState extends State<HerdsView> {
     try {
       await widget.supabaseClient
         .from('herds')
-          .insert({
-            'name': name,
-            'numberOfAnimals': numberOfAnimals,
-          });
+        .insert({
+          'name': name,
+          'numberOfAnimals': numberOfAnimals,
+          'active': true, // Set active status when creating
+        });
       _herdNameController.clear();
       _numberOfAnimalsController.clear();
       _loadHerds();
@@ -94,7 +104,7 @@ class _HerdsViewState extends State<HerdsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Herds'),
+        title: const Text('Herds'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -102,18 +112,26 @@ class _HerdsViewState extends State<HerdsView> {
           children: [
             TextField(
               controller: _herdNameController,
-              decoration: InputDecoration(labelText: 'Herd Name'),
+              decoration: const InputDecoration(
+                labelText: 'Herd Name',
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 16),
             TextField(
               controller: _numberOfAnimalsController,
-              decoration: InputDecoration(labelText: 'Number of Animals'),
+              decoration: const InputDecoration(
+                labelText: 'Number of Animals',
+                border: OutlineInputBorder(),
+              ),
               keyboardType: TextInputType.number,
             ),
-            ElevatedButton(
+            const SizedBox(height: 16),
+            FilledButton(
               onPressed: _addHerd,
-              child: Text('Add'),
+              child: const Text('Add Herd'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 24),
             // Header row
             Row(
               children: [
@@ -136,10 +154,10 @@ class _HerdsViewState extends State<HerdsView> {
                         ),
                   ),
                 ),
-                SizedBox(width: 48), // Width of IconButton
+                const SizedBox(width: 48), // Width of IconButton
               ],
             ),
-            Divider(thickness: 2),
+            const Divider(thickness: 2),
             Expanded(
               child: ListView.builder(
                 itemCount: _herds.length,
@@ -164,7 +182,7 @@ class _HerdsViewState extends State<HerdsView> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.edit),
+                          icon: const Icon(Icons.edit),
                           onPressed: () {
                             Navigator.push(
                               context,
