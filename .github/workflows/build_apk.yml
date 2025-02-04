@@ -1,9 +1,7 @@
 name: Build APK and Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -80,5 +78,5 @@ jobs:
             Release ${{ env.NEW_VERSION }}
             
             Changes in this version:
-            - Automated release from main branch
+            - Manual release triggered
             - APK build included
