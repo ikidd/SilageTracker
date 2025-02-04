@@ -1,11 +1,11 @@
 {
-    "name": "silage_tracker",
-    "short_name": "silage_tracker",
+    "name": "Silage Tracker",
+    "short_name": "Silage Tracker",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A tracker for feeding on your farm",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

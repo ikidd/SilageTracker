@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "silage_tracker" "\0"
+            VALUE "FileDescription", "A tracker for feeding on your farm" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "silage_tracker" "\0"
+            VALUE "InternalName", "Silage Tracker" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "silage_tracker.exe" "\0"
-            VALUE "ProductName", "silage_tracker" "\0"
+            VALUE "ProductName", "Silage Tracker" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

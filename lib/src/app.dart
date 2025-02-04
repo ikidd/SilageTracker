@@ -87,29 +87,93 @@ class _MyAppState extends State<MyApp> {
                     default:
                       return Scaffold(
                         appBar: AppBar(
-                          title: const Text('Home'),
+                          centerTitle: true,
+                          title: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Feed Tracking',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                        body: ListView(
+                        body: Column(
                           children: [
-                            ListTile(
-                              title: const Text('Silage'),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                    context, SilageEntryView.routeName);
-                              },
+                            Expanded(
+                              child: ListView(
+                                padding: const EdgeInsets.all(16),
+                                children: [
+                                  Card(
+                                    elevation: 4,
+                                    child: ListTile(
+                                      title: const Text(
+                                        'Silage',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: const Text('Track feed and silage entries'),
+                                      leading: Icon(
+                                        Icons.grass,
+                                        size: 32,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                      onTap: () {
+                                        Navigator.pushNamed(
+                                            context, SilageEntryView.routeName);
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Card(
+                                    elevation: 4,
+                                    child: ListTile(
+                                      title: const Text(
+                                        'Herds',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: const Text('Manage your herds'),
+                                      leading: Icon(
+                                        Icons.pets,
+                                        size: 32,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                      onTap: () {
+                                        Navigator.pushNamed(context, HerdsView.routeName);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            ListTile(
-                              title: const Text('Herds'),
-                              onTap: () {
-                                Navigator.pushNamed(context, HerdsView.routeName);
-                              },
-                            ),
-                            ListTile(
-                              title: const Text('Settings'),
-                              leading: const Icon(Icons.settings),
-                              onTap: () {
-                                Navigator.pushNamed(context, SettingsView.routeName);
-                              },
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Theme.of(context).dividerColor,
+                                  ),
+                                ),
+                              ),
+                              child: ListTile(
+                                title: const Text('Settings'),
+                                leading: const Icon(Icons.settings),
+                                onTap: () {
+                                  Navigator.pushNamed(context, SettingsView.routeName);
+                                },
+                              ),
                             ),
                           ],
                         ),

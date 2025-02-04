@@ -51,6 +51,25 @@ class _SilageEntryViewState extends State<SilageEntryView> {
     });
   }
 
+  Future<void> _deleteSilageEntry(String uid) async {
+    try {
+      await widget.supabaseClient
+          .from('silage_fed')
+          .delete()
+          .eq('uid', uid);
+      await _loadSilageEntries(); // Reload the list after deletion
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting entry: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _loadSilageEntries() async {
     print('Loading silage entries...'); // Debug log
     try {
@@ -112,92 +131,128 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                         ))
                       : DataTable(
                           columns: [
-                            DataColumn(
-                              label: Row(
-                                children: [
-                                  const Text('Date'),
-                                  IconButton(
-                                    icon: const Icon(Icons.filter_list),
-                                    onPressed: () async {
-                                      final date = await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime.now(),
-                                      );
-                                      if (date != null) {
-                                        setState(() {
-                                          _dateFilter = date.toString().split(' ')[0];
-                                          _updateFilters();
-                                        });
-                                      }
-                                    },
-                                  ),
-                                  if (_dateFilter != null)
+                              DataColumn(
+                                label: Row(
+                                  children: [
+                                    const Text('Date'),
                                     IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
+                                      icon: const Icon(Icons.filter_list),
+                                      onPressed: () async {
+                                        final date = await showDatePicker(
+                                          context: context,
+                                          initialDate: DateTime.now(),
+                                          firstDate: DateTime(2000),
+                                          lastDate: DateTime.now(),
+                                        );
+                                        if (date != null) {
+                                          setState(() {
+                                            _dateFilter = date.toString().split(' ')[0];
+                                            _updateFilters();
+                                          });
+                                        }
+                                      },
+                                    ),
+                                    if (_dateFilter != null)
+                                      IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          setState(() {
+                                            _dateFilter = null;
+                                            _updateFilters();
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              DataColumn(
+                                label: Row(
+                                  children: [
+                                    const Text('Herd'),
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(Icons.filter_list),
+                                      onSelected: (String value) {
                                         setState(() {
-                                          _dateFilter = null;
+                                          _herdFilter = value;
                                           _updateFilters();
                                         });
                                       },
-                                    ),
-                                ],
-                              ),
-                            ),
-                            DataColumn(
-                              label: Row(
-                                children: [
-                                  const Text('Herd'),
-                                  PopupMenuButton<String>(
-                                    icon: const Icon(Icons.filter_list),
-                                    onSelected: (String value) {
-                                      setState(() {
-                                        _herdFilter = value;
-                                        _updateFilters();
-                                      });
-                                    },
-                                    itemBuilder: (BuildContext context) {
-                                      return [
-                                        const PopupMenuItem<String>(
-                                          value: '',
-                                          child: Text('Clear Filter'),
-                                        ),
-                                        ..._uniqueHerds.map((herd) => PopupMenuItem<String>(
-                                          value: herd,
-                                          child: Text(herd),
-                                        )),
-                                      ];
-                                    },
-                                  ),
-                                  if (_herdFilter != null && _herdFilter!.isNotEmpty)
-                                    IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        setState(() {
-                                          _herdFilter = null;
-                                          _updateFilters();
-                                        });
+                                      itemBuilder: (BuildContext context) {
+                                        return [
+                                          const PopupMenuItem<String>(
+                                            value: '',
+                                            child: Text('Clear Filter'),
+                                          ),
+                                          ..._uniqueHerds.map((herd) => PopupMenuItem<String>(
+                                            value: herd,
+                                            child: Text(herd),
+                                          )),
+                                        ];
                                       },
                                     ),
-                                ],
+                                    if (_herdFilter != null && _herdFilter!.isNotEmpty)
+                                      IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          setState(() {
+                                            _herdFilter = null;
+                                            _updateFilters();
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const DataColumn(
-                              label: Text('Amount Fed (lbs)'),
-                            ),
-                          ],
-                          rows: _filteredEntries.map((entry) {
-                            final date = DateTime.parse(entry['created_at']).toLocal();
-                            return DataRow(
-                              cells: [
-                                DataCell(Text(date.toString().split(' ')[0])),
-                                DataCell(Text(entry['herds']['name'])),
-                                DataCell(Text('${entry['amount_fed']} lbs')),
-                              ],
-                            );
-                          }).toList(),
+                              const DataColumn(
+                                label: Text('Amount Fed (lbs)'),
+                              ),
+                              const DataColumn(
+                                label: Text(''),
+                              ),
+                            ],
+                            rows: _filteredEntries.map((entry) {
+                              final date = DateTime.parse(entry['created_at']).toLocal();
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(date.toString().split(' ')[0])),
+                                  DataCell(Text(entry['herds']['name'])),
+                                  DataCell(Text('${entry['amount_fed']} lbs')),
+                                  DataCell(
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      onPressed: () async {
+                                        final confirmed = await showDialog<bool>(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text('Confirm Delete'),
+                                              content: const Text('Are you sure you want to delete this entry?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(false),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(true),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: Colors.red,
+                                                  ),
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                        
+                                        if (confirmed == true) {
+                                          await _deleteSilageEntry(entry['uid']);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
                         ),
                 ),
               ),
