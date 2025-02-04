@@ -70,21 +70,22 @@ class _InProgressScreenState extends State<InProgressScreen> {
     final double? grainPercentage = double.tryParse(_grainPercentageController.text);
 
     if (loadSize != null && grainPercentage != null) {
-      // Calculate grain needed for new load at target percentage
+      final double totalAvailable = loadSize + _carriedOverLoad;
       final double newLoadGrainNeeded = loadSize * (grainPercentage / 100);
+      final double totalGrainNeeded = totalAvailable * (grainPercentage / 100);
       
       setState(() {
         if (_carriedOverLoad > 0) {
-          // Calculate carried over grain percentage
+          // Show carryover information
           final double carriedOverPercentage = (_carriedOverGrain / _carriedOverLoad) * 100;
-          
-          _carryOverInfo = 'Carried over: ${_carriedOverLoad.toStringAsFixed(2)} lbs total with '
+          _carryOverInfo = 'Carried over from last load: ${_carriedOverLoad.toStringAsFixed(2)} lbs with '
               '${_carriedOverGrain.toStringAsFixed(2)} lbs grain (${carriedOverPercentage.toStringAsFixed(1)}%)';
           
-          // Calculate additional grain needed
-          _result = 'New load needs ${newLoadGrainNeeded.toStringAsFixed(2)} lbs grain\n'
-              'Subtract ${_carriedOverGrain.toStringAsFixed(2)} lbs carried over\n'
-              'Add ${(newLoadGrainNeeded - _carriedOverGrain).toStringAsFixed(2)} lbs of grain to reach $grainPercentage%';
+          // Calculate additional grain needed considering carryover
+          final double additionalGrainNeeded = totalGrainNeeded - _carriedOverGrain;
+          _result = 'Total grain needed: ${totalGrainNeeded.toStringAsFixed(2)} lbs\n'
+              'Using ${_carriedOverGrain.toStringAsFixed(2)} lbs from carryover\n'
+              'Add ${additionalGrainNeeded.toStringAsFixed(2)} lbs of grain';
         } else {
           _carryOverInfo = '';
           _result = 'Add ${newLoadGrainNeeded.toStringAsFixed(2)} lbs of grain to reach $grainPercentage%';
@@ -117,48 +118,59 @@ class _InProgressScreenState extends State<InProgressScreen> {
       return;
     }
 
-    if (amountUsed > loadSize) {
+    final double totalAvailable = loadSize + _carriedOverLoad;
+    if (amountUsed > totalAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Amount used cannot be greater than load size.')),
+        const SnackBar(content: Text('Amount used cannot be greater than available load.')),
       );
       return;
     }
 
     try {
+      // Calculate the actual grain percentage for this feeding
+      final double totalGrain = (loadSize * (grainPercentage / 100)) + _carriedOverGrain;
+      final double actualGrainPercentage = (totalGrain / totalAvailable) * 100;
+
       await widget.supabaseClient
         .from('silage_fed')
         .insert({
           'uid': _uuid.v4(),
           'herd_id': _selectedHerd!['uid'],
           'amount_fed': amountUsed,
-          'grain_percentage': grainPercentage,
+          'grain_percentage': actualGrainPercentage,
           'created_at': DateTime.now().toIso8601String(),
         });
 
-      // Calculate remaining amounts
-      final double totalLoad = loadSize + _carriedOverLoad;
-      final double totalGrain = (loadSize * (grainPercentage / 100)) + _carriedOverGrain;
-      final double remaining = totalLoad - amountUsed;
-      final double remainingGrain = totalGrain * (remaining / totalLoad);
-
+      // Calculate remaining amounts from this load only
+      final double remaining = totalAvailable - amountUsed;
+      
       if (remaining > 0) {
+        // Calculate remaining grain based on the proportion of feed remaining
+        final double remainingGrain = totalGrain * (remaining / totalAvailable);
+        
         setState(() {
           _carriedOverLoad = remaining;
           _carriedOverGrain = remainingGrain;
-          _resetForm(); // Reset form including herd selection
-          _calculateGrainWeight();
+          _resetForm();
         });
-        
-        // Calculate carried over percentage for message
-        final double carriedOverPercentage = (remainingGrain / remaining) * 100;
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(
             'Load saved. Remaining: ${remaining.toStringAsFixed(2)} lbs with '
-            '${remainingGrain.toStringAsFixed(2)} lbs grain (${carriedOverPercentage.toStringAsFixed(1)}%)'
+            '${remainingGrain.toStringAsFixed(2)} lbs grain'
           )),
         );
       } else {
+        // No carryover if everything was used
+        setState(() {
+          _carriedOverLoad = 0;
+          _carriedOverGrain = 0;
+          _resetForm();
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Load saved successfully')),
+        );
         Navigator.pop(context, true);
       }
     } catch (error) {
