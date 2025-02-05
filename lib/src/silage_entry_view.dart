@@ -130,96 +130,145 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                           child: Text('No silage entries found.'),
                         ))
                       : DataTable(
+                          columnSpacing: 8,
+                          horizontalMargin: 8,
                           columns: [
                               DataColumn(
-                                label: Row(
-                                  children: [
-                                    const Text('Date'),
-                                    IconButton(
-                                      icon: const Icon(Icons.filter_list),
-                                      onPressed: () async {
-                                        final date = await showDatePicker(
-                                          context: context,
-                                          initialDate: DateTime.now(),
-                                          firstDate: DateTime(2000),
-                                          lastDate: DateTime.now(),
-                                        );
-                                        if (date != null) {
-                                          setState(() {
-                                            _dateFilter = date.toString().split(' ')[0];
-                                            _updateFilters();
-                                          });
-                                        }
-                                      },
-                                    ),
-                                    if (_dateFilter != null)
+                                label: Container(
+                                  width: 70,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('Date', style: TextStyle(fontSize: 12)),
                                       IconButton(
-                                        icon: const Icon(Icons.clear),
-                                        onPressed: () {
-                                          setState(() {
-                                            _dateFilter = null;
-                                            _updateFilters();
-                                          });
+                                        padding: EdgeInsets.zero,
+                                        constraints: BoxConstraints.tightFor(width: 20),
+                                        icon: const Icon(Icons.filter_list, size: 16),
+                                        onPressed: () async {
+                                          final date = await showDatePicker(
+                                            context: context,
+                                            initialDate: DateTime.now(),
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime.now(),
+                                          );
+                                          if (date != null) {
+                                            setState(() {
+                                              _dateFilter = date.toString().split(' ')[0];
+                                              _updateFilters();
+                                            });
+                                          }
                                         },
                                       ),
-                                  ],
+                                      if (_dateFilter != null)
+                                        IconButton(
+                                          padding: EdgeInsets.zero,
+                                          constraints: BoxConstraints.tightFor(width: 20),
+                                          icon: const Icon(Icons.clear, size: 16),
+                                          onPressed: () {
+                                            setState(() {
+                                              _dateFilter = null;
+                                              _updateFilters();
+                                            });
+                                          },
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               DataColumn(
-                                label: Row(
-                                  children: [
-                                    const Text('Herd'),
-                                    PopupMenuButton<String>(
-                                      icon: const Icon(Icons.filter_list),
-                                      onSelected: (String value) {
-                                        setState(() {
-                                          _herdFilter = value;
-                                          _updateFilters();
-                                        });
-                                      },
-                                      itemBuilder: (BuildContext context) {
-                                        return [
-                                          const PopupMenuItem<String>(
-                                            value: '',
-                                            child: Text('Clear Filter'),
-                                          ),
-                                          ..._uniqueHerds.map((herd) => PopupMenuItem<String>(
-                                            value: herd,
-                                            child: Text(herd),
-                                          )),
-                                        ];
-                                      },
-                                    ),
-                                    if (_herdFilter != null && _herdFilter!.isNotEmpty)
-                                      IconButton(
-                                        icon: const Icon(Icons.clear),
-                                        onPressed: () {
+                                label: Container(
+                                  width: 80,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('Herd', style: TextStyle(fontSize: 12)),
+                                      PopupMenuButton<String>(
+                                        padding: EdgeInsets.zero,
+                                        icon: const Icon(Icons.filter_list, size: 16),
+                                        onSelected: (String value) {
                                           setState(() {
-                                            _herdFilter = null;
+                                            _herdFilter = value;
                                             _updateFilters();
                                           });
                                         },
+                                        itemBuilder: (BuildContext context) {
+                                          return [
+                                            const PopupMenuItem<String>(
+                                              value: '',
+                                              child: Text('Clear Filter'),
+                                            ),
+                                            ..._uniqueHerds.map((herd) => PopupMenuItem<String>(
+                                              value: herd,
+                                              child: Text(herd),
+                                            )),
+                                          ];
+                                        },
                                       ),
-                                  ],
+                                      if (_herdFilter != null && _herdFilter!.isNotEmpty)
+                                        IconButton(
+                                          padding: EdgeInsets.zero,
+                                          constraints: BoxConstraints.tightFor(width: 20),
+                                          icon: const Icon(Icons.clear, size: 16),
+                                          onPressed: () {
+                                            setState(() {
+                                              _herdFilter = null;
+                                              _updateFilters();
+                                            });
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Container(
+                                  width: 60,
+                                  child: const Text('Lbs', style: TextStyle(fontSize: 12)),
                                 ),
                               ),
                               const DataColumn(
-                                label: Text('Amount Fed (lbs)'),
-                              ),
-                              const DataColumn(
-                                label: Text(''),
+                                label: SizedBox(width: 24),
                               ),
                             ],
                             rows: _filteredEntries.map((entry) {
                               final date = DateTime.parse(entry['created_at']).toLocal();
+                              final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                              final formattedDate = '${months[date.month]} ${date.day}';
                               return DataRow(
                                 cells: [
-                                  DataCell(Text(date.toString().split(' ')[0])),
-                                  DataCell(Text(entry['herds']['name'])),
-                                  DataCell(Text('${entry['amount_fed']} lbs')),
+                                  DataCell(
+                                    Container(
+                                      width: 70,
+                                      child: Text(
+                                        formattedDate,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Container(
+                                      width: 80,
+                                      child: Text(
+                                        entry['herds']['name'],
+                                        style: const TextStyle(fontSize: 12),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Container(
+                                      width: 60,
+                                      child: Text(
+                                        entry['amount_fed'].toString(),
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  ),
                                   DataCell(
                                     IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      padding: EdgeInsets.zero,
+                                      constraints: BoxConstraints.tightFor(width: 24),
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
                                       onPressed: () async {
                                         final confirmed = await showDialog<bool>(
                                           context: context,

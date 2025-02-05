@@ -70,9 +70,8 @@ class _InProgressScreenState extends State<InProgressScreen> {
     final double? grainPercentage = double.tryParse(_grainPercentageController.text);
 
     if (loadSize != null && grainPercentage != null) {
-      final double totalAvailable = loadSize + _carriedOverLoad;
-      final double newLoadGrainNeeded = loadSize * (grainPercentage / 100);
-      final double totalGrainNeeded = totalAvailable * (grainPercentage / 100);
+      // Calculate required grain based only on new load size
+      final double requiredGrain = loadSize * (grainPercentage / 100);
       
       setState(() {
         if (_carriedOverLoad > 0) {
@@ -81,14 +80,14 @@ class _InProgressScreenState extends State<InProgressScreen> {
           _carryOverInfo = 'Carried over from last load: ${_carriedOverLoad.toStringAsFixed(2)} lbs with '
               '${_carriedOverGrain.toStringAsFixed(2)} lbs grain (${carriedOverPercentage.toStringAsFixed(1)}%)';
           
-          // Calculate additional grain needed considering carryover
-          final double additionalGrainNeeded = totalGrainNeeded - _carriedOverGrain;
-          _result = 'Total grain needed: ${totalGrainNeeded.toStringAsFixed(2)} lbs\n'
+          // Calculate additional grain needed by subtracting carried over grain
+          final double additionalGrainNeeded = requiredGrain - _carriedOverGrain;
+          _result = 'Required grain for load: ${requiredGrain.toStringAsFixed(2)} lbs\n'
               'Using ${_carriedOverGrain.toStringAsFixed(2)} lbs from carryover\n'
               'Add ${additionalGrainNeeded.toStringAsFixed(2)} lbs of grain';
         } else {
           _carryOverInfo = '';
-          _result = 'Add ${newLoadGrainNeeded.toStringAsFixed(2)} lbs of grain to reach $grainPercentage%';
+          _result = 'Add ${requiredGrain.toStringAsFixed(2)} lbs of grain to reach $grainPercentage%';
         }
       });
     } else {
@@ -118,10 +117,10 @@ class _InProgressScreenState extends State<InProgressScreen> {
       return;
     }
 
-    final double totalAvailable = loadSize + _carriedOverLoad;
-    if (amountUsed > totalAvailable) {
+    // Only consider current load for amount validation
+    if (amountUsed > loadSize) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Amount used cannot be greater than available load.')),
+        const SnackBar(content: Text('Amount used cannot be greater than the current load size.')),
       );
       return;
     }
@@ -137,12 +136,12 @@ class _InProgressScreenState extends State<InProgressScreen> {
           'created_at': DateTime.now().toIso8601String(),
         });
 
-      // Calculate remaining amount
-      final double remaining = totalAvailable - amountUsed;
+      // Calculate remaining amount from current load only
+      final double remaining = loadSize - amountUsed;
       
       setState(() {
         if (remaining > 0) {
-          // Set carryover with current grain percentage
+          // Set carryover based only on current load's remaining amount
           _carriedOverLoad = remaining;
           _carriedOverGrain = remaining * (grainPercentage / 100);
           
