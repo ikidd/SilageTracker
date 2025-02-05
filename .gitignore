@@ -46,3 +46,10 @@ app.*.map.json
 *.jks
 *.keystore
 key.properties
+
+# Android local properties
+/android/local.properties
+
+# Flutter DevTools
+devtools_options.yaml
+android/local.properties

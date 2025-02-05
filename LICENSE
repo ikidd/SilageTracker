@@ -1,0 +1,80 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2024 SilageTracker Contributors
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ As additional permission under GNU AGPL version 3 section 7, you
+ may combine this Program with free software programs or libraries that
+ are released under the GNU LGPL and with code included in the standard
+ release of the "Flutter" library under the BSD-3-Clause License (or
+ modified versions of such code, with unchanged license).
+ You may copy and distribute such a system following the terms of the
+ GNU AGPL for this Program and the licenses of the other code concerned.
+
+ Note that people who make modified versions of this Program are not obligated
+ to grant this special exception for their modified versions; it is their
+ choice whether to do so. The GNU Affero General Public License gives
+ permission to release a modified version without this exception; this
+ exception also makes it possible to release a modified version which
+ carries forward this exception.
+
+                            Preamble
+
+The GNU Affero General Public License is designed specifically to ensure that
+in the case of network server applications, the modified source code becomes
+available to the community. It requires the operator of a network server to
+provide the source code of the modified version running there to the users
+of that server.
+
+For more information on the GNU Affero General Public License, see:
+<https://www.gnu.org/licenses/agpl-3.0.html>
+
+How to Apply These Terms to Your New Programs
+
+If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+To do so, attach the following notices to the program. It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+    SilageTracker - A Flutter application for tracking silage feeding operations
+    Copyright (C) 2024 SilageTracker Contributors
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Also add information on how to contact you by electronic and paper mail.
+
+If your software can interact with users remotely through a computer
+network, you should also make sure that it provides a way for users to
+get its source code. For example, if your program is a web application,
+its interface could display a "Source" link that leads to an archive
+of the code. There are many ways you could offer source, and different
+solutions will be better for different programs; see section 13 for the
+specific requirements.
