@@ -50,6 +50,9 @@ key.properties
 # Android local properties
 /android/local.properties
 
+# Android Gradle files
+android/.gradle/
+
 # Flutter DevTools
 devtools_options.yaml
 android/local.properties
