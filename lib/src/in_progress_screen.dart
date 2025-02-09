@@ -35,7 +35,8 @@ class _InProgressScreenState extends State<InProgressScreen> {
     try {
       final dynamic response = await widget.supabaseClient
           .from('herds')
-          .select();
+          .select()
+          .eq('active', true);
       if (response is List) {
         setState(() {
           _herds = List<Map<String, dynamic>>.from(response);
