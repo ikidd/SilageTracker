@@ -15,57 +15,42 @@
 - Card-based main menu
 - Basic app bar implementation
 - View transitions
+- Data tables with filtering
 
 ### Supabase Integration ✅
 - Client initialization
 - Configuration via settings
-- Basic connectivity service structure
+- Basic CRUD operations
 - Real-time client setup
 
 ### Views ✅
 - Home view with main menu
 - Settings view with navigation
-- Silage entry view structure
-- Herds management view structure
+- Silage entry view with filtering
+- Herds management view with editing
 
 ## In Progress Features 🚧
 
-### Connectivity Management
-- [ ] Implement ConnectionStatusWidget
-- [ ] Add offline mode detection
-- [ ] Implement sync status indicators
-- [ ] Add network state management
-- [ ] Implement retry mechanisms
-
 ### Data Management
-- [ ] Set up local SQLite database
-- [ ] Implement data models
-- [ ] Create repository layer
-- [ ] Add offline data persistence
-- [ ] Implement sync mechanisms
+- [ ] Optimize query performance
+- [ ] Enhance error handling
+- [ ] Improve data validation
+- [ ] Add loading states
 
 ### Silage Entry Features
-- [ ] Complete entry form
-- [ ] Add validation
-- [ ] Implement data persistence
-- [ ] Add history view
-- [ ] Implement editing capabilities
+- [ ] Enhance form validation
+- [ ] Improve error messages
+- [ ] Add success feedback
+- [ ] Optimize filtering performance
 
 ### Herd Management
-- [ ] Complete herd creation
-- [ ] Add herd editing
-- [ ] Implement herd deletion
-- [ ] Add herd statistics
-- [ ] Create herd reports
+- [x] Basic herd creation
+- [x] Herd editing
+- [x] Herd activation/deactivation
+- [ ] Enhance herd statistics
+- [ ] Improve form validation
 
 ## Planned Features 📋
-
-### Data Synchronization
-- Offline-first architecture
-- Background sync
-- Conflict resolution
-- Sync status tracking
-- Error recovery
 
 ### Enhanced UI/UX
 - Loading states
@@ -84,11 +69,10 @@
 ### Security
 - User authentication
 - Role-based access
-- Data encryption
-- Secure storage
+- Row-level security
 - Access logging
 
-## Technical Debt 🔧
+## Technical Debt 🧹
 
 ### Code Organization
 - [ ] Implement proper repository pattern
@@ -99,7 +83,6 @@
 
 ### Performance
 - [ ] Optimize large dataset handling
-- [ ] Implement efficient caching
 - [ ] Add pagination
 - [ ] Optimize memory usage
 - [ ] Profile and optimize bottlenecks
@@ -108,30 +91,23 @@
 - [ ] Add code documentation
 - [ ] Create API documentation
 - [ ] Add usage guides
-- [ ] Document offline capabilities
 - [ ] Create deployment guide
 
 ## Next Milestone Goals 🎯
 
-### Milestone 1: Basic Offline Capability
-- Implement ConnectionStatusWidget
-- Set up local storage
-- Add basic sync mechanism
-- Implement offline indicators
+### Milestone 1: Enhanced Data Management
+- Improve error handling
+- Add loading states
+- Optimize query performance
+- Enhance data validation
 
-### Milestone 2: Enhanced Data Management
-- Complete repository implementation
-- Add conflict resolution
-- Implement background sync
-- Add comprehensive error handling
-
-### Milestone 3: UI/UX Improvements
+### Milestone 2: UI/UX Improvements
 - Add loading states
 - Implement form validation
 - Add success/failure feedback
 - Enhance error messages
 
-### Milestone 4: Reporting and Analytics
+### Milestone 3: Reporting and Analytics
 - Implement basic reports
 - Add data visualization
 - Create export functionality

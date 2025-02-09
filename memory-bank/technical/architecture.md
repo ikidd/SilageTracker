@@ -18,9 +18,9 @@
 ├─────────────────────────────────────────────────────────┤
 │                      Data Layer                         │
 ├─────────────────────────────────────────────────────────┤
-│ ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │
-│ │  Supabase   │  │ Local Storage│  │  Cache Manager  │ │
-│ └─────────────┘  └──────────────┘  └─────────────────┘ │
+│ ┌─────────────┐                                        │
+│ │  Supabase   │                                        │
+│ └─────────────┘                                        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -34,9 +34,9 @@
 - `SettingsView`: Manages application settings
 
 #### Widgets
-- `ConnectionStatusWidget`: Displays network connectivity status
 - Custom form components
 - Reusable UI elements
+- Data tables with filtering
 
 #### State Management
 - Provider + ChangeNotifier for local state
@@ -46,7 +46,6 @@
 ### 2. Business Logic Layer
 
 #### Services
-- `ConnectivityService`: Manages network state and sync operations
 - Authentication service (planned)
 - Analytics service (planned)
 
@@ -58,28 +57,22 @@
 #### Providers
 - State providers for each major feature
 - Settings provider
-- Connectivity provider
 
 ### 3. Data Layer
 
 #### Supabase Integration
-- Real-time data sync
+- Direct database access
 - Authentication (planned)
 - PostgreSQL database access
-
-#### Local Storage
-- SQLite database for offline data
-- Secure storage for credentials
-- Cache management
 
 ## Component Relationships
 
 ### Data Flow
 ```
-User Input → View → Provider → Repository → Local/Remote Storage
-     ↑         ↓       ↓           ↓              ↑
-     └─────────────────────────────────────────────
-                    Data Updates
+User Input → View → Provider → Repository → Supabase
+     ↑         ↓       ↓           ↓          ↑
+     └────────────────────────────────────────
+                   Data Updates
 ```
 
 ### State Management Flow
@@ -92,11 +85,10 @@ ChangeNotifier → ListenableBuilder → UI Update
 
 ## Key Design Decisions
 
-### 1. Offline-First Architecture
-- Local-first data operations
-- Background synchronization
-- Conflict resolution strategy
-- Queue-based sync operations
+### 1. Online Architecture
+- Direct Supabase operations
+- Real-time data access
+- Error handling and retry logic
 
 ### 2. State Management
 - Provider pattern for simplicity
@@ -105,10 +97,9 @@ ChangeNotifier → ListenableBuilder → UI Update
 - Clear state boundaries
 
 ### 3. Data Persistence
-- SQLite for local storage
 - Supabase for cloud storage
-- Efficient sync mechanism
 - Robust error handling
+- Data validation
 
 ### 4. UI Architecture
 - Clean separation of concerns
@@ -120,15 +111,13 @@ ChangeNotifier → ListenableBuilder → UI Update
 
 ### Scalability
 - Pagination for large datasets
-- Efficient data caching
-- Background processing
 - Performance optimization
+- Query optimization
 
 ### Security
-- End-to-end encryption
-- Secure storage
 - Access control
 - Data validation
+- Row-level security
 
 ### Maintainability
 - Modular architecture

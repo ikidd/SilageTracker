@@ -8,14 +8,14 @@ Silage Tracker is a Flutter-based mobile application designed to help farmers an
 - Silage feeding amount tracking
 - Grain percentage recording
 - Feeding history visualization
-- Offline-capable data management
-- Automatic synchronization with Supabase backend
+- Real-time data updates via Supabase
+- Filtering and sorting capabilities
 
 ## Technical Stack
 - **Frontend Framework**: Flutter 3.16.5
 - **Backend Service**: Supabase
 - **Database**: PostgreSQL (via Supabase)
-- **Authentication**: Supabase Auth
+- **Authentication**: Supabase Auth (planned)
 - **Build/CI**: GitHub Actions
 - **Platform**: Mobile-first (Android primary focus)
 
@@ -27,17 +27,19 @@ The application is primarily designed for mobile devices, with a specific focus 
    - Built-in real-time capabilities
    - PostgreSQL database support
    - Simplified authentication system
-   - Offline data sync capabilities
+   - Row-level security
 
 2. **Mobile-First Design**:
-   - Optimized for use in varying network conditions
    - Touch-friendly interface
    - Compact, efficient data entry forms
+   - Responsive layouts
+   - Optimized data tables
 
 3. **Data Architecture**:
-   - Local storage for offline operation
-   - Background synchronization with Supabase
-   - Conflict resolution strategies for data consistency
+   - Direct Supabase integration
+   - Real-time data updates
+   - Efficient data validation
+   - Error handling and recovery
 
 4. **Build and Deployment**:
    - Automated builds via GitHub Actions
