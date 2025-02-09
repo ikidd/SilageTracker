@@ -29,9 +29,13 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _initSupabase();
+  }
+
+  Future<void> _initSupabase() async {
     _supabaseClient = SupabaseClient(
-      'https://sxbetuloniiplaafjeaf.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4YmV0dWxvbmlpcGxhYWZqZWFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1MzcxNjgsImV4cCI6MjA1NDExMzE2OH0.GD3M_4BEm80dKCvjJxgm_D_dKialG0NiVO2FjS1Vka4',
+      widget.settingsController.supabaseUrl,
+      widget.settingsController.supabaseKey,
     );
     _connectivityService = ConnectivityService(_supabaseClient);
   }

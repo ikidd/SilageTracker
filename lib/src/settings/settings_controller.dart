@@ -13,21 +13,33 @@ class SettingsController with ChangeNotifier {
   // Make SettingsService a private variable so it is not used directly.
   final SettingsService _settingsService;
 
-  // Make ThemeMode a private variable so it is not updated directly without
-  // also persisting the changes with the SettingsService.
   late ThemeMode _themeMode;
-  
-  // Make showDeleteConfirmation a private variable
   late bool _showDeleteConfirmation;
+  late String _supabaseUrl;
+  late String _supabaseKey;
 
-  // Allow Widgets to read the user's preferred ThemeMode.
   ThemeMode get themeMode => _themeMode;
-
-  // Allow Widgets to read the delete confirmation setting
   bool get showDeleteConfirmation => _showDeleteConfirmation;
-
-  // Get the application version
+  String get supabaseUrl => _supabaseUrl;
+  String get supabaseKey => _supabaseKey;
   String get version => '0.0.5';
+
+  // Function to validate Supabase URL
+  bool isValidSupabaseUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.isScheme('https') && uri.host.contains('supabase');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // Function to validate Supabase key
+  bool isValidSupabaseKey(String key) {
+    // Basic JWT format validation
+    final parts = key.split('.');
+    return parts.length == 3 && key.length > 50;
+  }
 
   /// Load the user's settings from the SettingsService. It may load from a
   /// local database or the internet. The controller only knows it can load the
@@ -36,9 +48,37 @@ class SettingsController with ChangeNotifier {
     await _settingsService.init();
     _themeMode = await _settingsService.themeMode();
     _showDeleteConfirmation = await _settingsService.showDeleteConfirmation();
+    _supabaseUrl = await _settingsService.supabaseUrl();
+    _supabaseKey = await _settingsService.supabaseKey();
 
     // Important! Inform listeners a change has occurred.
     notifyListeners();
+  }
+
+  /// Update and persist the Supabase URL
+  Future<void> updateSupabaseUrl(String url) async {
+    if (!isValidSupabaseUrl(url)) {
+      throw FormatException('Invalid Supabase URL format');
+    }
+
+    if (url == _supabaseUrl) return;
+
+    _supabaseUrl = url;
+    notifyListeners();
+    await _settingsService.updateSupabaseUrl(url);
+  }
+
+  /// Update and persist the Supabase key
+  Future<void> updateSupabaseKey(String key) async {
+    if (!isValidSupabaseKey(key)) {
+      throw FormatException('Invalid Supabase key format');
+    }
+
+    if (key == _supabaseKey) return;
+
+    _supabaseKey = key;
+    notifyListeners();
+    await _settingsService.updateSupabaseKey(key);
   }
 
   /// Update and persist the ThemeMode based on the user's selection.

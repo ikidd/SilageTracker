@@ -6,13 +6,18 @@ import 'settings_controller.dart';
 ///
 /// When a user changes a setting, the SettingsController is updated and
 /// Widgets that listen to the SettingsController are rebuilt.
-class SettingsView extends StatelessWidget {
+class SettingsView extends StatefulWidget {
   const SettingsView({super.key, required this.controller});
 
   static const routeName = '/settings';
 
   final SettingsController controller;
 
+  @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,8 +33,8 @@ class SettingsView extends StatelessWidget {
             const Text('Theme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             DropdownButton<ThemeMode>(
-              value: controller.themeMode,
-              onChanged: controller.updateThemeMode,
+              value: widget.controller.themeMode,
+              onChanged: widget.controller.updateThemeMode,
               items: const [
                 DropdownMenuItem(
                   value: ThemeMode.system,
@@ -52,14 +57,67 @@ class SettingsView extends StatelessWidget {
             SwitchListTile(
               title: const Text('Show delete confirmation dialog'),
               subtitle: const Text('Ask for confirmation before deleting entries'),
-              value: controller.showDeleteConfirmation,
-              onChanged: controller.updateShowDeleteConfirmation,
+              value: widget.controller.showDeleteConfirmation,
+              onChanged: widget.controller.updateShowDeleteConfirmation,
+            ),
+            const SizedBox(height: 24),
+            // Supabase settings
+            const Text('Supabase Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: TextEditingController(text: widget.controller.supabaseUrl),
+              decoration: const InputDecoration(
+                labelText: 'Supabase URL',
+                border: OutlineInputBorder(),
+                helperText: 'e.g., https://your-project.supabase.co',
+              ),
+              onSubmitted: (value) async {
+                try {
+                  await widget.controller.updateSupabaseUrl(value);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Supabase URL updated. Please restart the app.')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: TextEditingController(text: widget.controller.supabaseKey),
+              decoration: const InputDecoration(
+                labelText: 'Supabase API Key',
+                border: OutlineInputBorder(),
+                helperText: 'Your project\'s anon/public API key',
+              ),
+              onSubmitted: (value) async {
+                try {
+                  await widget.controller.updateSupabaseKey(value);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Supabase API key updated. Please restart the app.')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
             ),
             const SizedBox(height: 24),
             // Version information
             const Text('Version', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(controller.version),
+            Text(widget.controller.version),
           ],
         ),
       ),
