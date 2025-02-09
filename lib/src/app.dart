@@ -81,9 +81,15 @@ class _MyAppState extends State<MyApp> {
                     case SettingsView.routeName:
                       return SettingsView(controller: widget.settingsController);
                     case SilageEntryView.routeName:
-                      return SilageEntryView(supabaseClient: _supabaseClient);
+                      return SilageEntryView(
+                        supabaseClient: _supabaseClient,
+                        settingsController: widget.settingsController,
+                      );
                     case HerdsView.routeName:
-                      return HerdsView(supabaseClient: _supabaseClient);
+                      return HerdsView(
+                        supabaseClient: _supabaseClient,
+                        settingsController: widget.settingsController,
+                      );
                     default:
                       return Scaffold(
                         appBar: AppBar(

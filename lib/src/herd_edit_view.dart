@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'settings/settings_controller.dart';
 
 class HerdEditView extends StatefulWidget {
   final Map<String, dynamic> herd;
   final SupabaseClient supabaseClient;
   final VoidCallback onHerdChanged;
+  final SettingsController settingsController;
 
   const HerdEditView({
     super.key,
     required this.herd,
     required this.supabaseClient,
     required this.onHerdChanged,
+    required this.settingsController,
   });
 
   @override
@@ -78,38 +81,73 @@ class _HerdEditViewState extends State<HerdEditView> {
     }
   }
 
-  Future<void> _deactivateHerd() async {
+  Future<void> _toggleHerdStatus() async {
     final ctx = context;
-    // Show confirmation dialog
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Deactivate Herd'),
-          content: const Text(
-            'Are you sure you want to deactivate this herd? '
-            'This will hide it from the list but preserve its history.'
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Deactivate'),
-            ),
-          ],
-        );
-      },
-    );
+    final bool isCurrentlyActive = widget.herd['active'] ?? true;
+    final String action = isCurrentlyActive ? 'Deactivate' : 'Activate';
+    bool shouldToggle = true;
 
-    if (confirm != true) return;
+    if (widget.settingsController.showDeleteConfirmation && isCurrentlyActive) {
+      bool dontShowAgain = false;
+      shouldToggle = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text('$action Herd'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Are you sure you want to $action this herd? '
+                      '${isCurrentlyActive ? 'This will hide it from the list but preserve its history.' : ''}'
+                    ),
+                    if (isCurrentlyActive) ...[
+                      const SizedBox(height: 16),
+                      CheckboxListTile(
+                        title: const Text('Don\'t ask me again'),
+                        value: dontShowAgain,
+                        onChanged: (value) {
+                          setState(() {
+                            dontShowAgain = value ?? false;
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (dontShowAgain) {
+                        widget.settingsController.updateShowDeleteConfirmation(false);
+                      }
+                      Navigator.of(context).pop(true);
+                    },
+                    child: Text(action),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ) ?? false;
+    }
+
+    if (!shouldToggle) return;
 
     try {
       await widget.supabaseClient
         .from('herds')
-        .update({'active': false})
+        .update({'active': !isCurrentlyActive})
         .eq('uid', widget.herd['uid']);
         
       widget.onHerdChanged();
@@ -127,6 +165,9 @@ class _HerdEditViewState extends State<HerdEditView> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isCurrentlyActive = widget.herd['active'] ?? true;
+    final String actionText = isCurrentlyActive ? 'Deactivate' : 'Activate';
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Herd'),
@@ -165,11 +206,13 @@ class _HerdEditViewState extends State<HerdEditView> {
                   child: const Text('Cancel'),
                 ),
                 FilledButton.tonal(
-                  onPressed: _deactivateHerd,
+                  onPressed: _toggleHerdStatus,
                   child: Text(
-                    'Deactivate',
+                    actionText,
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                      color: isCurrentlyActive
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),

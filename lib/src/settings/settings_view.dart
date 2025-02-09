@@ -46,6 +46,16 @@ class SettingsView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
+            // Delete confirmation setting
+            const Text('Delete Confirmation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Show delete confirmation dialog'),
+              subtitle: const Text('Ask for confirmation before deleting entries'),
+              value: controller.showDeleteConfirmation,
+              onChanged: controller.updateShowDeleteConfirmation,
+            ),
+            const SizedBox(height: 24),
             // Version information
             const Text('Version', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'herd_edit_view.dart';
 
+import 'settings/settings_controller.dart';
+
 class HerdsView extends StatefulWidget {
   final SupabaseClient supabaseClient;
+  final SettingsController settingsController;
 
   const HerdsView({
     super.key,
     required this.supabaseClient,
+    required this.settingsController,
   });
 
   static const routeName = '/herds';
@@ -31,11 +35,22 @@ class _HerdsViewState extends State<HerdsView> {
     try {
       final dynamic response = await widget.supabaseClient
           .from('herds')
-          .select()
-          .eq('active', true); // Only select active herds
+          .select();
       if (response is List) {
+        final herds = List<Map<String, dynamic>>.from(response);
+        // Sort herds: active first, then by name
+        herds.sort((a, b) {
+          // First sort by active status
+          final aActive = a['active'] ?? true;
+          final bActive = b['active'] ?? true;
+          if (aActive != bActive) {
+            return aActive ? -1 : 1; // Active herds come first
+          }
+          // Then sort by name
+          return (a['name'] as String).compareTo(b['name'] as String);
+        });
         setState(() {
-          _herds = List<Map<String, dynamic>>.from(response);
+          _herds = herds;
         });
       }
     } catch (error) {
@@ -50,14 +65,6 @@ class _HerdsViewState extends State<HerdsView> {
   Future<void> _addHerd() async {
     final String name = _herdNameController.text.trim();
     final int? numberOfAnimals = int.tryParse(_numberOfAnimalsController.text);
-    final user = widget.supabaseClient.auth.currentUser;
-
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to add a herd')),
-      );
-      return;
-    }
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,6 +123,10 @@ class _HerdsViewState extends State<HerdsView> {
                 labelText: 'Herd Name',
                 border: OutlineInputBorder(),
               ),
+              onTap: () => _herdNameController.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _herdNameController.text.length,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -125,6 +136,10 @@ class _HerdsViewState extends State<HerdsView> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
+              onTap: () => _numberOfAnimalsController.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _numberOfAnimalsController.text.length,
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton(
@@ -168,9 +183,29 @@ class _HerdsViewState extends State<HerdsView> {
                       children: [
                         Expanded(
                           flex: 2,
-                          child: Text(
-                            _herds[index]['name'],
-                            style: Theme.of(context).textTheme.bodyLarge,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _herds[index]['name'],
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                              if (!(_herds[index]['active'] ?? true))
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Deactivated',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         Expanded(
@@ -191,6 +226,7 @@ class _HerdsViewState extends State<HerdsView> {
                                   herd: _herds[index],
                                   supabaseClient: widget.supabaseClient,
                                   onHerdChanged: _loadHerds,
+                                  settingsController: widget.settingsController,
                                 ),
                               ),
                             );

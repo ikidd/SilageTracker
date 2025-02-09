@@ -1,17 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// A service that stores and retrieves user settings.
-///
-/// By default, this class does not persist user settings. If you'd like to
-/// persist the user settings locally, use the shared_preferences package. If
-/// you'd like to store settings on a web server, use the http package.
 class SettingsService {
-  /// Loads the User's preferred ThemeMode from local or remote storage.
-  Future<ThemeMode> themeMode() async => ThemeMode.system;
+  static const String _themeModeKey = 'themeMode';
+  static const String _showDeleteConfirmKey = 'showDeleteConfirm';
+  late final SharedPreferences _prefs;
 
-  /// Persists the user's preferred ThemeMode to local or remote storage.
+  /// Initialize the settings service
+  Future<void> init() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  /// Loads the User's preferred ThemeMode from local storage.
+  Future<ThemeMode> themeMode() async {
+    final String? themeModeString = _prefs.getString(_themeModeKey);
+    switch (themeModeString) {
+      case 'ThemeMode.light':
+        return ThemeMode.light;
+      case 'ThemeMode.dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  /// Persists the user's preferred ThemeMode to local storage.
   Future<void> updateThemeMode(ThemeMode theme) async {
-    // Use the shared_preferences package to persist settings locally or the
-    // http package to persist settings over the network.
+    await _prefs.setString(_themeModeKey, theme.toString());
+  }
+
+  /// Loads whether to show delete confirmation dialogs
+  Future<bool> showDeleteConfirmation() async {
+    return _prefs.getBool(_showDeleteConfirmKey) ?? true;
+  }
+
+  /// Updates whether to show delete confirmation dialogs
+  Future<void> updateShowDeleteConfirmation(bool show) async {
+    await _prefs.setBool(_showDeleteConfirmKey, show);
   }
 }

@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'in_progress_screen.dart';
 
+import 'settings/settings_controller.dart';
+
 class SilageEntryView extends StatefulWidget {
-  const SilageEntryView({super.key, required this.supabaseClient});
+  const SilageEntryView({
+    super.key,
+    required this.supabaseClient,
+    required this.settingsController,
+  });
+  
   final SupabaseClient supabaseClient;
+  final SettingsController settingsController;
   static const routeName = '/silage-entry';
 
   @override
@@ -75,7 +83,7 @@ class _SilageEntryViewState extends State<SilageEntryView> {
     try {
       final dynamic response = await widget.supabaseClient
           .from('silage_fed')
-          .select('*, herds(name)')
+          .select('*, herds(name), grain_percentage')
           .order('created_at', ascending: false);
       print('Silage entries loaded: $response'); // Debug log
       if (response is List) {
@@ -226,6 +234,12 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                   child: const Text('Lbs', style: TextStyle(fontSize: 12)),
                                 ),
                               ),
+                              DataColumn(
+                                label: Container(
+                                  width: 60,
+                                  child: const Text('Grain %', style: TextStyle(fontSize: 12)),
+                                ),
+                              ),
                               const DataColumn(
                                 label: SizedBox(width: 24),
                               ),
@@ -265,35 +279,76 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                     ),
                                   ),
                                   DataCell(
+                                    Container(
+                                      width: 60,
+                                      child: Text(
+                                        '${(entry['grain_percentage'] as num?)?.toStringAsFixed(1) ?? '0.0'}%',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
                                     IconButton(
                                       padding: EdgeInsets.zero,
                                       constraints: BoxConstraints.tightFor(width: 24),
                                       icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
                                       onPressed: () async {
-                                        final confirmed = await showDialog<bool>(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: const Text('Confirm Delete'),
-                                              content: const Text('Are you sure you want to delete this entry?'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.of(context).pop(false),
-                                                  child: const Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () => Navigator.of(context).pop(true),
-                                                  style: TextButton.styleFrom(
-                                                    foregroundColor: Colors.red,
-                                                  ),
-                                                  child: const Text('Delete'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                        
-                                        if (confirmed == true) {
+                                        bool shouldDelete = true;
+
+                                        if (widget.settingsController.showDeleteConfirmation) {
+                                          bool dontShowAgain = false;
+                                          shouldDelete = await showDialog<bool>(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return StatefulBuilder(
+                                                builder: (context, setState) {
+                                                  return AlertDialog(
+                                                    title: const Text('Confirm Delete'),
+                                                    content: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        const Text('Are you sure you want to delete this entry?'),
+                                                        const SizedBox(height: 16),
+                                                        CheckboxListTile(
+                                                          title: const Text('Don\'t ask me again'),
+                                                          value: dontShowAgain,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              dontShowAgain = value ?? false;
+                                                            });
+                                                          },
+                                                          controlAffinity: ListTileControlAffinity.leading,
+                                                          contentPadding: EdgeInsets.zero,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.of(context).pop(false),
+                                                        child: const Text('Cancel'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          if (dontShowAgain) {
+                                                            widget.settingsController.updateShowDeleteConfirmation(false);
+                                                          }
+                                                          Navigator.of(context).pop(true);
+                                                        },
+                                                        style: TextButton.styleFrom(
+                                                          foregroundColor: Colors.red,
+                                                        ),
+                                                        child: const Text('Delete'),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ) ?? false;
+                                        }
+
+                                        if (shouldDelete) {
                                           await _deleteSilageEntry(entry['uid']);
                                         }
                                       },

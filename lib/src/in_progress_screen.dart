@@ -234,6 +234,10 @@ class _InProgressScreenState extends State<InProgressScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.next,
               onChanged: _onLoadSizeChanged,
+              onTap: () => _loadSizeController.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _loadSizeController.text.length,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -245,6 +249,10 @@ class _InProgressScreenState extends State<InProgressScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.next,
               onChanged: (value) => _calculateGrainWeight(),
+              onTap: () => _grainPercentageController.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _grainPercentageController.text.length,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -255,6 +263,10 @@ class _InProgressScreenState extends State<InProgressScreen> {
               ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.done,
+              onTap: () => _amountUsedController.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _amountUsedController.text.length,
+              ),
             ),
             const SizedBox(height: 16),
             if (_carryOverInfo.isNotEmpty) ...[
