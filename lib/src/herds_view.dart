@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'herd_edit_view.dart';
+import 'settings/settings_view.dart';
 
 import 'settings/settings_controller.dart';
 
@@ -113,132 +114,143 @@ class _HerdsViewState extends State<HerdsView> {
       appBar: AppBar(
         title: const Text('Herds'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _herdNameController,
-              decoration: const InputDecoration(
-                labelText: 'Herd Name',
-                border: OutlineInputBorder(),
-              ),
-              onTap: () => _herdNameController.selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _herdNameController.text.length,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _numberOfAnimalsController,
-              decoration: const InputDecoration(
-                labelText: 'Number of Animals',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              onTap: () => _numberOfAnimalsController.selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _numberOfAnimalsController.text.length,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _addHerd,
-              child: const Text('Add Herd'),
-            ),
-            const SizedBox(height: 24),
-            // Header row
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Herd Name',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+      body: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: _herdNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Herd Name',
+                  border: OutlineInputBorder(),
                 ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'Animals',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+                onTap: () => _herdNameController.selection = TextSelection(
+                  baseOffset: 0,
+                  extentOffset: _herdNameController.text.length,
                 ),
-                const SizedBox(width: 48), // Width of IconButton
-              ],
-            ),
-            const Divider(thickness: 2),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _herds.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _herds[index]['name'],
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ),
-                              if (!(_herds[index]['active'] ?? true))
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.surfaceVariant,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _numberOfAnimalsController,
+                decoration: const InputDecoration(
+                  labelText: 'Number of Animals',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                onTap: () => _numberOfAnimalsController.selection = TextSelection(
+                  baseOffset: 0,
+                  extentOffset: _numberOfAnimalsController.text.length,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: _addHerd,
+                child: const Text('Add Herd'),
+              ),
+              const SizedBox(height: 24),
+              // Header row
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Herd Name',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      'Animals',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Width of IconButton
+                ],
+              ),
+              const Divider(thickness: 2),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _herds.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Row(
+                              children: [
+                                Expanded(
                                   child: Text(
-                                    'Deactivated',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    _herds[index]['name'],
+                                    style: Theme.of(context).textTheme.bodyLarge,
+                                  ),
+                                ),
+                                if (!(_herds[index]['active'] ?? true))
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceVariant,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Deactivated',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: Text(
-                            '${_herds[index]['numberOfAnimals'] ?? 0}',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              '${_herds[index]['numberOfAnimals'] ?? 0}',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HerdEditView(
-                                  herd: _herds[index],
-                                  supabaseClient: widget.supabaseClient,
-                                  onHerdChanged: _loadHerds,
-                                  settingsController: widget.settingsController,
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HerdEditView(
+                                    herd: _herds[index],
+                                    supabaseClient: widget.supabaseClient,
+                                    onHerdChanged: _loadHerds,
+                                    settingsController: widget.settingsController,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

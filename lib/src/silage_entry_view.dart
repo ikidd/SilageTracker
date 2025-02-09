@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'in_progress_screen.dart';
 
 import 'settings/settings_controller.dart';
+import 'settings/settings_view.dart';
 
 class SilageEntryView extends StatefulWidget {
   const SilageEntryView({
@@ -102,57 +103,62 @@ class _SilageEntryViewState extends State<SilageEntryView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Silage Entry'),
+        title: const Text('Silage Entry'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Button to start new load
-            ElevatedButton(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InProgressScreen(
-                      supabaseClient: widget.supabaseClient,
+      body: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Button to start new load
+              ElevatedButton(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InProgressScreen(
+                        supabaseClient: widget.supabaseClient,
+                      ),
                     ),
-                  ),
-                );
-                if (result == true) {
-                  await _loadSilageEntries();
-                }
-              },
-              child: Text('Start New Load'),
-            ),
-            SizedBox(height: 20),
-            // DataTable to display silage_fed records
-            Expanded(
-              child: Card(
-                elevation: 2,
-                child: SingleChildScrollView(
-                  child: _silageEntries.isEmpty
-                      ? Center(child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text('No silage entries found.'),
-                        ))
-                      : DataTable(
-                          columnSpacing: 8,
-                          horizontalMargin: 8,
-                          columns: [
+                  );
+                  if (result == true) {
+                    await _loadSilageEntries();
+                  }
+                },
+                child: const Text('Start New Load'),
+              ),
+              const SizedBox(height: 20),
+              // DataTable to display silage_fed records
+              Expanded(
+                child: Card(
+                  elevation: 2,
+                  child: SingleChildScrollView(
+                    child: _silageEntries.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text('No silage entries found.'),
+                            ),
+                          )
+                        : DataTable(
+                            columnSpacing: 8,
+                            horizontalMargin: 8,
+                            columns: [
                               DataColumn(
                                 label: Container(
                                   width: 70,
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Text('Date', style: TextStyle(fontSize: 12)),
-                                      IconButton(
-                                        padding: EdgeInsets.zero,
-                                        constraints: BoxConstraints.tightFor(width: 20),
-                                        icon: const Icon(Icons.filter_list, size: 16),
-                                        onPressed: () async {
+                                      const Text('Date',
+                                          style: TextStyle(fontSize: 12)),
+                                      const SizedBox(width: 2),
+                                      InkWell(
+                                        child:
+                                            const Icon(Icons.filter_list, size: 14),
+                                        onTap: () async {
                                           final date = await showDatePicker(
                                             context: context,
                                             initialDate: DateTime.now(),
@@ -161,24 +167,26 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                           );
                                           if (date != null) {
                                             setState(() {
-                                              _dateFilter = date.toString().split(' ')[0];
+                                              _dateFilter =
+                                                  date.toString().split(' ')[0];
                                               _updateFilters();
                                             });
                                           }
                                         },
                                       ),
-                                      if (_dateFilter != null)
-                                        IconButton(
-                                          padding: EdgeInsets.zero,
-                                          constraints: BoxConstraints.tightFor(width: 20),
-                                          icon: const Icon(Icons.clear, size: 16),
-                                          onPressed: () {
+                                      if (_dateFilter != null) ...[
+                                        const SizedBox(width: 2),
+                                        InkWell(
+                                          child:
+                                              const Icon(Icons.clear, size: 14),
+                                          onTap: () {
                                             setState(() {
                                               _dateFilter = null;
                                               _updateFilters();
                                             });
                                           },
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -189,10 +197,13 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Text('Herd', style: TextStyle(fontSize: 12)),
+                                      const Text('Herd',
+                                          style: TextStyle(fontSize: 12)),
+                                      const SizedBox(width: 2),
                                       PopupMenuButton<String>(
                                         padding: EdgeInsets.zero,
-                                        icon: const Icon(Icons.filter_list, size: 16),
+                                        icon: const Icon(Icons.filter_list,
+                                            size: 14),
                                         onSelected: (String value) {
                                           setState(() {
                                             _herdFilter = value;
@@ -205,25 +216,28 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                               value: '',
                                               child: Text('Clear Filter'),
                                             ),
-                                            ..._uniqueHerds.map((herd) => PopupMenuItem<String>(
-                                              value: herd,
-                                              child: Text(herd),
-                                            )),
+                                            ..._uniqueHerds.map((herd) =>
+                                                PopupMenuItem<String>(
+                                                  value: herd,
+                                                  child: Text(herd),
+                                                )),
                                           ];
                                         },
                                       ),
-                                      if (_herdFilter != null && _herdFilter!.isNotEmpty)
-                                        IconButton(
-                                          padding: EdgeInsets.zero,
-                                          constraints: BoxConstraints.tightFor(width: 20),
-                                          icon: const Icon(Icons.clear, size: 16),
-                                          onPressed: () {
+                                      if (_herdFilter != null &&
+                                          _herdFilter!.isNotEmpty) ...[
+                                        const SizedBox(width: 2),
+                                        InkWell(
+                                          child:
+                                              const Icon(Icons.clear, size: 14),
+                                          onTap: () {
                                             setState(() {
                                               _herdFilter = null;
                                               _updateFilters();
                                             });
                                           },
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -231,13 +245,15 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                               DataColumn(
                                 label: Container(
                                   width: 60,
-                                  child: const Text('Lbs', style: TextStyle(fontSize: 12)),
+                                  child: const Text('Lbs',
+                                      style: TextStyle(fontSize: 12)),
                                 ),
                               ),
                               DataColumn(
                                 label: Container(
                                   width: 60,
-                                  child: const Text('Grain %', style: TextStyle(fontSize: 12)),
+                                  child: const Text('Grain %',
+                                      style: TextStyle(fontSize: 12)),
                                 ),
                               ),
                               const DataColumn(
@@ -245,9 +261,25 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                               ),
                             ],
                             rows: _filteredEntries.map((entry) {
-                              final date = DateTime.parse(entry['created_at']).toLocal();
-                              final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                              final formattedDate = '${months[date.month]} ${date.day}';
+                              final date =
+                                  DateTime.parse(entry['created_at']).toLocal();
+                              final months = [
+                                '',
+                                'Jan',
+                                'Feb',
+                                'Mar',
+                                'Apr',
+                                'May',
+                                'Jun',
+                                'Jul',
+                                'Aug',
+                                'Sep',
+                                'Oct',
+                                'Nov',
+                                'Dec'
+                              ];
+                              final formattedDate =
+                                  '${months[date.month]} ${date.day}';
                               return DataRow(
                                 cells: [
                                   DataCell(
@@ -290,62 +322,98 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                   DataCell(
                                     IconButton(
                                       padding: EdgeInsets.zero,
-                                      constraints: BoxConstraints.tightFor(width: 24),
-                                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
+                                      constraints:
+                                          const BoxConstraints.tightFor(width: 24),
+                                      icon: const Icon(Icons.delete_outline,
+                                          color: Colors.red, size: 16),
                                       onPressed: () async {
                                         bool shouldDelete = true;
 
-                                        if (widget.settingsController.showDeleteConfirmation) {
+                                        if (widget.settingsController
+                                            .showDeleteConfirmation) {
                                           bool dontShowAgain = false;
-                                          shouldDelete = await showDialog<bool>(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return StatefulBuilder(
-                                                builder: (context, setState) {
-                                                  return AlertDialog(
-                                                    title: const Text('Confirm Delete'),
-                                                    content: Column(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        const Text('Are you sure you want to delete this entry?'),
-                                                        const SizedBox(height: 16),
-                                                        CheckboxListTile(
-                                                          title: const Text('Don\'t ask me again'),
-                                                          value: dontShowAgain,
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              dontShowAgain = value ?? false;
-                                                            });
-                                                          },
-                                                          controlAffinity: ListTileControlAffinity.leading,
-                                                          contentPadding: EdgeInsets.zero,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.of(context).pop(false),
-                                                        child: const Text('Cancel'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          if (dontShowAgain) {
-                                                            widget.settingsController.updateShowDeleteConfirmation(false);
-                                                          }
-                                                          Navigator.of(context).pop(true);
+                                          shouldDelete =
+                                              await showDialog<bool>(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return StatefulBuilder(
+                                                        builder:
+                                                            (context, setState) {
+                                                          return AlertDialog(
+                                                            title: const Text(
+                                                                'Confirm Delete'),
+                                                            content: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                const Text(
+                                                                    'Are you sure you want to delete this entry?'),
+                                                                const SizedBox(
+                                                                    height: 16),
+                                                                CheckboxListTile(
+                                                                  title: const Text(
+                                                                      'Don\'t ask me again'),
+                                                                  value:
+                                                                      dontShowAgain,
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    setState(() {
+                                                                      dontShowAgain =
+                                                                          value ??
+                                                                              false;
+                                                                    });
+                                                                  },
+                                                                  controlAffinity:
+                                                                      ListTileControlAffinity
+                                                                          .leading,
+                                                                  contentPadding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop(
+                                                                            false),
+                                                                child: const Text(
+                                                                    'Cancel'),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed: () {
+                                                                  if (dontShowAgain) {
+                                                                    widget
+                                                                        .settingsController
+                                                                        .updateShowDeleteConfirmation(
+                                                                            false);
+                                                                  }
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop(true);
+                                                                },
+                                                                style: TextButton
+                                                                    .styleFrom(
+                                                                  foregroundColor:
+                                                                      Colors.red,
+                                                                ),
+                                                                child: const Text(
+                                                                    'Delete'),
+                                                              ),
+                                                            ],
+                                                          );
                                                         },
-                                                        style: TextButton.styleFrom(
-                                                          foregroundColor: Colors.red,
-                                                        ),
-                                                        child: const Text('Delete'),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          ) ?? false;
+                                                      );
+                                                    },
+                                                  ) ??
+                                              false;
                                         }
 
                                         if (shouldDelete) {
@@ -357,11 +425,12 @@ class _SilageEntryViewState extends State<SilageEntryView> {
                                 ],
                               );
                             }).toList(),
-                        ),
+                          ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
