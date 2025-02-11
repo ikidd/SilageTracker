@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import 'settings_controller.dart';
+import '../services/auth_service.dart';
 
 /// Displays the various settings that can be customized by the user.
 ///
@@ -42,88 +44,132 @@ class _SettingsViewState extends State<SettingsView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Theme selection dropdown
-              const Text('Theme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              DropdownButton<ThemeMode>(
-                value: widget.controller.themeMode,
-                onChanged: widget.controller.updateThemeMode,
-                items: const [
-                  DropdownMenuItem(
-                    value: ThemeMode.system,
-                    child: Text('System Theme'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Theme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  DropdownButton<ThemeMode>(
+                    value: widget.controller.themeMode,
+                    onChanged: widget.controller.updateThemeMode,
+                    items: const [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('System Theme'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light Theme'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark Theme'),
+                      )
+                    ],
                   ),
-                  DropdownMenuItem(
-                    value: ThemeMode.light,
-                    child: Text('Light Theme'),
-                  ),
-                  DropdownMenuItem(
-                    value: ThemeMode.dark,
-                    child: Text('Dark Theme'),
-                  )
                 ],
               ),
               const SizedBox(height: 24),
               // Delete confirmation setting
-              const Text('Delete Confirmation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Show delete confirmation dialog'),
-                subtitle: const Text('Ask for confirmation before deleting entries'),
-                value: widget.controller.showDeleteConfirmation,
-                onChanged: widget.controller.updateShowDeleteConfirmation,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Delete Confirmation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Switch(
+                    value: widget.controller.showDeleteConfirmation,
+                    onChanged: widget.controller.updateShowDeleteConfirmation,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
-              // Supabase settings
-              const Text('Supabase Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: TextEditingController(text: widget.controller.supabaseUrl),
-                decoration: const InputDecoration(
-                  labelText: 'Supabase URL',
-                  border: OutlineInputBorder(),
-                  helperText: 'e.g., https://your-project.supabase.co',
-                ),
-                onSubmitted: (value) async {
-                  try {
-                    await widget.controller.updateSupabaseUrl(value);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Supabase URL updated. Please restart the app.')),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
-                      );
-                    }
-                  }
-                },
+              // Logout section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Logout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.logout),
+                    onPressed: () {
+                      context.read<AuthService>().signOut();
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: TextEditingController(text: widget.controller.supabaseKey),
-                decoration: const InputDecoration(
-                  labelText: 'Supabase API Key',
-                  border: OutlineInputBorder(),
-                  helperText: 'Your project\'s anon/public API key',
+              const SizedBox(height: 24),
+              // Advanced Settings
+              Theme(
+                data: Theme.of(context).copyWith(
+                  dividerColor: Colors.transparent,
                 ),
-                onSubmitted: (value) async {
-                  try {
-                    await widget.controller.updateSupabaseKey(value);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Supabase API key updated. Please restart the app.')),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
-                      );
-                    }
-                  }
-                },
+                child: ExpansionTile(
+                  title: const Text('Advanced Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  textColor: Theme.of(context).textTheme.bodyLarge?.color,
+                  iconColor: Theme.of(context).iconTheme.color,
+                  children: [
+                    // Supabase settings
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                      child: Text('Supabase Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TextField(
+                        controller: TextEditingController(text: widget.controller.supabaseUrl),
+                        decoration: const InputDecoration(
+                          labelText: 'Supabase URL',
+                          border: OutlineInputBorder(),
+                          helperText: 'e.g., https://your-project.supabase.co',
+                        ),
+                        onSubmitted: (value) async {
+                          try {
+                            await widget.controller.updateSupabaseUrl(value);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Supabase URL updated. Please restart the app.')),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TextField(
+                        controller: TextEditingController(text: widget.controller.supabaseKey),
+                        decoration: const InputDecoration(
+                          labelText: 'Supabase API Key',
+                          border: OutlineInputBorder(),
+                          helperText: 'Your project\'s anon/public API key',
+                        ),
+                        onSubmitted: (value) async {
+                          try {
+                            await widget.controller.updateSupabaseKey(value);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Supabase API key updated. Please restart the app.')),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               // Version information

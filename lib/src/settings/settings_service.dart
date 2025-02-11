@@ -7,9 +7,12 @@ class SettingsService {
   static const String _showDeleteConfirmKey = 'showDeleteConfirm';
   static const String _supabaseUrlKey = 'supabaseUrl';
   static const String _supabaseKeyKey = 'supabaseKey';
-  static const String _defaultSupabaseUrl = 'https://sxbetuloniiplaafjeaf.supabase.co';
-  static const String _defaultSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4YmV0dWxvbmlpcGxhYWZqZWFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1MzcxNjgsImV4cCI6MjA1NDExMzE2OH0.GD3M_4BEm80dKCvjJxgm_D_dKialG0NiVO2FjS1Vka4';
+///  static const String _defaultSupabaseUrl = 'https://sxbetuloniiplaafjeaf.supabase.co';
+///  static const String _defaultSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4YmV0dWxvbmlpcGxhYWZqZWFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1MzcxNjgsImV4cCI6MjA1NDExMzE2OH0.GD3M_4BEm80dKCvjJxgm_D_dKialG0NiVO2FjS1Vka4';
   
+  static const String _defaultSupabaseUrl = 'https://supabase.pebcake.com';
+  static const String _defaultSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM5MTcwODAwLAogICJleHAiOiAxODk2OTM3MjAwCn0.3XJyhrOwSR9ga3Dy3zGx23J48f6qaE0SUy7eVRKI9Dk';
+
   late final SharedPreferences _prefs;
 
   /// Initialize the settings service

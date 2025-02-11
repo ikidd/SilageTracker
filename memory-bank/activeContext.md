@@ -12,17 +12,28 @@
 2. **Supabase Integration**
    - Basic client setup
    - Settings-based configuration
+   - Email OTP authentication system
+   - Row Level Security (RLS) policies
 
-3. **Main Views**
+3. **Authentication System**
+   - Email-based OTP authentication
+   - Magic link functionality
+   - No password storage required
+   - Protected routes
+   - Automatic session management
+
+4. **Main Views**
+   - Authentication View (OTP-based login)
    - Silage Entry View
    - Herds Management View
    - Settings View
 
-4. **UI Components**
+5. **UI Components**
    - Navigation system with FAB
    - Card-based main menu
    - Data tables with filtering
    - Form validation
+   - OTP verification forms
 
 ### In Progress Features
 1. **UI/UX Improvements**
@@ -39,6 +50,7 @@
    - Client initialization from settings
    - Basic CRUD operations
    - Row-level security
+   - OTP authentication services
 
 ## Current Development Focus
 
@@ -56,6 +68,10 @@
 1. Large datasets may impact performance
 2. Error messages could be more descriptive
 3. Form validation could be more robust
+
+### Recently Resolved Issues
+1. Fixed ConnectivityService provider implementation by changing from Provider to ChangeNotifierProvider to properly handle state updates
+2. Updated authentication system to use email OTP instead of password-based auth for improved security and user experience
 
 ### Technical Challenges
 1. **Data Management**

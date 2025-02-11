@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
 
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 import 'silage_entry_view.dart';
 import 'herds_view.dart';
 import 'services/connectivity_service.dart';
+import 'services/auth_service.dart';
+import 'auth/auth_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatefulWidget {
@@ -24,23 +27,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late SupabaseClient _supabaseClient;
   late ConnectivityService _connectivityService;
+  late AuthService _authService;
   int _selectedIndex = 0; // 0 for settings
   bool _wasInSubPage = false;
 
   @override
   void initState() {
     super.initState();
-    _initSupabase();
+    _initServices();
   }
 
-  Future<void> _initSupabase() async {
-    _supabaseClient = SupabaseClient(
-      widget.settingsController.supabaseUrl,
-      widget.settingsController.supabaseKey,
-    );
-    _connectivityService = ConnectivityService(_supabaseClient);
+  void _initServices() {
+    final supabaseClient = Supabase.instance.client;
+    _connectivityService = ConnectivityService(supabaseClient);
+    _authService = AuthService();
   }
 
   @override
@@ -51,8 +52,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ConnectivityServiceProvider(
-      service: _connectivityService,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthService>.value(value: _authService),
+        ChangeNotifierProvider<ConnectivityService>.value(value: _connectivityService),
+      ],
       child: ListenableBuilder(
         listenable: widget.settingsController,
         builder: (BuildContext context, Widget? child) {
@@ -72,119 +76,123 @@ class _MyAppState extends State<MyApp> {
             theme: ThemeData(),
             darkTheme: ThemeData.dark(),
             themeMode: widget.settingsController.themeMode,
-            home: Navigator(
-              onGenerateRoute: (settings) {
-                return MaterialPageRoute(
-                  builder: (context) => Scaffold(
-                    body: IndexedStack(
-                      index: _selectedIndex,
-                      children: [
-                        // Home
-                        Scaffold(
-                          appBar: AppBar(
-                            automaticallyImplyLeading: false,
-                            leading: IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => SystemNavigator.pop(),
-                            ),
-                          ),
-                          body: Column(
-                            children: [
-                              const ConnectionStatusWidget(),
-                              Expanded(
-                                child: ListView(
-                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                  children: [
-                                    Card(
-                                      elevation: 4,
-                                      child: ListTile(
-                                        title: const Text(
-                                          'Silage',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: const Text('Track feed and silage entries'),
-                                        leading: Icon(
-                                          Icons.grass,
-                                          size: 32,
-                                          color: Theme.of(context).colorScheme.primary,
-                                        ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => SilageEntryView(
-                                                supabaseClient: _supabaseClient,
-                                                settingsController: widget.settingsController,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Card(
-                                      elevation: 4,
-                                      child: ListTile(
-                                        title: const Text(
-                                          'Herds',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: const Text('Manage your herds'),
-                                        leading: Icon(
-                                          Icons.pets,
-                                          size: 32,
-                                          color: Theme.of(context).colorScheme.primary,
-                                        ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => HerdsView(
-                                                supabaseClient: _supabaseClient,
-                                                settingsController: widget.settingsController,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
+            home: Consumer<AuthService>(
+              builder: (context, authService, _) {
+                if (!authService.isAuthenticated) {
+                  return const AuthView();
+                }
+
+                return Navigator(
+                  onGenerateRoute: (settings) {
+                    return MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        body: IndexedStack(
+                          index: _selectedIndex,
+                          children: [
+                            // Home
+                            Scaffold(
+                              appBar: AppBar(
+                                automaticallyImplyLeading: false,
                               ),
-                            ],
-                          ),
+                              body: Column(
+                                children: [
+                                  const ConnectionStatusWidget(),
+                                  Expanded(
+                                    child: ListView(
+                                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                      children: [
+                                        Card(
+                                          elevation: 4,
+                                          child: ListTile(
+                                            title: const Text(
+                                              'Silage',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            subtitle: const Text('Track feed and silage entries'),
+                                            leading: Icon(
+                                              Icons.grass,
+                                              size: 32,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => SilageEntryView(
+                                                    supabaseClient: Supabase.instance.client,
+                                                    settingsController: widget.settingsController,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Card(
+                                          elevation: 4,
+                                          child: ListTile(
+                                            title: const Text(
+                                              'Herds',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            subtitle: const Text('Manage your herds'),
+                                            leading: Icon(
+                                              Icons.pets,
+                                              size: 32,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => HerdsView(
+                                                    supabaseClient: Supabase.instance.client,
+                                                    settingsController: widget.settingsController,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Settings
+                            SettingsView(
+                              controller: widget.settingsController,
+                              onNavigateBack: () {
+                                setState(() {
+                                  _selectedIndex = 0;
+                                });
+                                if (_wasInSubPage) {
+                                  // If we were in a sub-page, pop back to it
+                                  Navigator.of(context).pop();
+                                  _wasInSubPage = false;
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        // Settings
-                        SettingsView(
-                          controller: widget.settingsController,
-                          onNavigateBack: () {
+                        floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
+                          onPressed: () {
                             setState(() {
-                              _selectedIndex = 0;
+                              _selectedIndex = 1;
                             });
-                            if (_wasInSubPage) {
-                              // If we were in a sub-page, pop back to it
-                              Navigator.of(context).pop();
-                              _wasInSubPage = false;
-                            }
                           },
-                        ),
-                      ],
-                    ),
-                    floatingActionButton: FloatingActionButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedIndex = 1;
-                        });
-                      },
-                      child: const Icon(Icons.settings),
-                    ),
-                  ),
+                          child: const Icon(Icons.settings),
+                        ) : null,
+                      ),
+                    );
+                  },
                 );
               },
             ),
