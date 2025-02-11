@@ -43,11 +43,28 @@ class AuthService extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      await _supabase.auth.verifyOTP(
-        email: email,
-        token: token,
-        type: OtpType.magiclink,
-      );
+      try {
+        // First attempt with magic link
+        await _supabase.auth.verifyOTP(
+          email: email,
+          token: token,
+          type: OtpType.magiclink,
+        );
+        return; // If successful, return early
+      } catch (magicLinkError) {
+        try {
+          // If magic link fails, try signup
+          await _supabase.auth.verifyOTP(
+            email: email,
+            token: token,
+            type: OtpType.signup,
+          );
+          return; // If successful, return early
+        } catch (signupError) {
+          // If both methods fail, throw combined error
+          throw 'Verification failed for both magic link and signup. Please try again or request a new code.';
+        }
+      }
     } catch (e) {
       _error = e.toString();
     } finally {

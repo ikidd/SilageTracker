@@ -1,5 +1,15 @@
 # Database Technical Documentation
 
+## Connection Configuration
+
+### Supabase Settings
+```
+URL: https://supabase.pebcake.com
+API Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM5MTcwODAwLAogICJleHAiOiAxODk2OTM3MjAwCn0.3XJyhrOwSR9>
+```
+
+These settings should be configured in your application's environment or settings file.
+
 ## Authentication Setup
 
 ### 1. Enable Email OTP Authentication in Supabase
@@ -98,6 +108,88 @@ CREATE TRIGGER set_silage_entry_user_id
 ```
 
 ## Tables
+
+### Initial Setup
+
+```sql
+-- Create theme_mode enum type
+CREATE TYPE theme_mode AS ENUM ('system', 'light', 'dark');
+
+-- Create tables
+CREATE TABLE herds (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    user_id UUID REFERENCES auth.users(id)
+);
+
+CREATE TABLE silage_fed (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    herd_id UUID REFERENCES herds(id) ON DELETE CASCADE,
+    entry_date DATE NOT NULL,
+    amount NUMERIC NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    user_id UUID REFERENCES auth.users(id)
+);
+
+CREATE TABLE profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
+    theme_mode theme_mode NOT NULL DEFAULT 'system',
+    show_delete_confirmation BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Add updated_at triggers to all tables
+CREATE TRIGGER update_herds_updated_at
+    BEFORE UPDATE ON herds
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_silage_fed_updated_at
+    BEFORE UPDATE ON silage_fed
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_profiles_updated_at
+    BEFORE UPDATE ON profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create trigger for automatic profile creation
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id)
+    VALUES (NEW.id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+
+-- Add indexes for performance
+CREATE INDEX idx_herds_user_id ON herds(user_id);
+CREATE INDEX idx_silage_fed_user_id ON silage_fed(user_id);
+CREATE INDEX idx_silage_fed_herd_id ON silage_fed(herd_id);
+CREATE INDEX idx_silage_fed_entry_date ON silage_fed(entry_date);
+```
 
 ### herds
 - id (UUID, primary key)
